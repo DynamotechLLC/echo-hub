@@ -105,8 +105,11 @@ async function demoLayout(ws) {
   const rooms = [];
   for (const name of ["E2E Living", "E2E Kitchen"]) rooms.push((await ws.call({ type: "config/area_registry/create", name })).area_id);
   const members = [...pick("light"), ...pick("switch").slice(0, 1), ...pick("media_player").slice(0, 1)];
+  // Newer Home Assistant refuses an area on an entity without a name of its own: set it on the device.
   for (const [i, entity_id] of members.entries()) {
-    await ws.call({ type: "config/entity_registry/update", entity_id, area_id: rooms[i % rooms.length] });
+    const device_id = reg.find((e) => e.entity_id === entity_id).device_id;
+    const area_id = rooms[i % rooms.length];
+    await ws.call(device_id ? { type: "config/device_registry/update", device_id, area_id } : { type: "config/entity_registry/update", entity_id, area_id });
   }
   const [areas, devices, entities] = await Promise.all([
     ws.call({ type: "config/area_registry/list" }),
