@@ -1,0 +1,5 @@
+{
+  "a_lock": ["fan.bedroom_fan"],
+  "a_kitchen": ["light.kitchen_ceiling", "switch.coffee"],
+  "a_living_room": ["light.living_room_lamp", "media_player.living_room_tv"]
+}

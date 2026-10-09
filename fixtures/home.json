@@ -1,0 +1,53 @@
+{
+  "areas": {
+    "living_room": {"area_id": "living_room", "name": "Living Room", "icon": "mdi:sofa"},
+    "kitchen": {"area_id": "kitchen", "name": "Kitchen", "icon": null},
+    "lock": {"area_id": "lock", "name": "Bedroom", "icon": "mdi:bed"},
+    "garage": {"area_id": "garage", "name": "Garage", "icon": "mdi:garage"}
+  },
+  "devices": {
+    "d_lamp": {"id": "d_lamp", "area_id": "living_room"},
+    "d_tv": {"id": "d_tv", "area_id": "living_room"},
+    "d_coffee": {"id": "d_coffee", "area_id": "kitchen"}
+  },
+  "entities": {
+    "light.living_room_lamp": {"entity_id": "light.living_room_lamp", "device_id": "d_lamp", "area_id": null},
+    "media_player.living_room_tv": {"entity_id": "media_player.living_room_tv", "device_id": "d_tv", "area_id": null},
+    "media_player.everywhere": {"entity_id": "media_player.everywhere", "device_id": null, "area_id": "living_room"},
+    "light.kitchen_ceiling": {"entity_id": "light.kitchen_ceiling", "device_id": null, "area_id": "kitchen"},
+    "light.kitchen_ceiling_segment_1": {"entity_id": "light.kitchen_ceiling_segment_1", "device_id": null, "area_id": "kitchen"},
+    "switch.coffee": {"entity_id": "switch.coffee", "device_id": "d_coffee", "area_id": null},
+    "switch.coffee_led": {"entity_id": "switch.coffee_led", "device_id": "d_coffee", "area_id": null, "entity_category": "config"},
+    "light.hidden_strip": {"entity_id": "light.hidden_strip", "device_id": null, "area_id": "kitchen", "hidden": true},
+    "fan.bedroom_fan": {"entity_id": "fan.bedroom_fan", "device_id": null, "area_id": "lock"},
+    "light.unassigned": {"entity_id": "light.unassigned", "device_id": null, "area_id": null},
+    "camera.front_door": {"entity_id": "camera.front_door", "device_id": null, "area_id": null},
+    "camera.backyard": {"entity_id": "camera.backyard", "device_id": null, "area_id": null},
+    "binary_sensor.front_door": {"entity_id": "binary_sensor.front_door", "device_id": null, "area_id": null},
+    "binary_sensor.hall_motion": {"entity_id": "binary_sensor.hall_motion", "device_id": null, "area_id": null},
+    "lock.front_door": {"entity_id": "lock.front_door", "device_id": null, "area_id": null},
+    "climate.thermostat": {"entity_id": "climate.thermostat", "device_id": null, "area_id": null},
+    "weather.home": {"entity_id": "weather.home", "device_id": null, "area_id": null}
+  },
+  "states": {
+    "light.living_room_lamp": {"state": "on", "attributes": {"friendly_name": "Lamp"}},
+    "media_player.living_room_tv": {"state": "off", "attributes": {}},
+    "media_player.everywhere": {"state": "idle", "attributes": {}},
+    "light.kitchen_ceiling": {"state": "off", "attributes": {}},
+    "light.kitchen_ceiling_segment_1": {"state": "off", "attributes": {}},
+    "switch.coffee": {"state": "off", "attributes": {}},
+    "switch.coffee_led": {"state": "on", "attributes": {}},
+    "light.hidden_strip": {"state": "off", "attributes": {}},
+    "fan.bedroom_fan": {"state": "off", "attributes": {}},
+    "light.unassigned": {"state": "off", "attributes": {}},
+    "camera.front_door": {"state": "idle", "attributes": {"friendly_name": "Front Door"}},
+    "camera.backyard": {"state": "idle", "attributes": {"friendly_name": "Backyard"}},
+    "binary_sensor.front_door": {"state": "off", "attributes": {"device_class": "door"}},
+    "binary_sensor.hall_motion": {"state": "off", "attributes": {"device_class": "motion"}},
+    "lock.front_door": {"state": "locked", "attributes": {}},
+    "climate.thermostat": {"state": "cool", "attributes": {}},
+    "weather.home": {"state": "sunny", "attributes": {"temperature": 74, "humidity": 50}}
+  },
+  "locale": {"language": "en", "time_format": "language"},
+  "user": {"name": "Panel", "is_admin": false}
+}
