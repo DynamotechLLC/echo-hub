@@ -15,8 +15,10 @@ export async function generateDashboard(config: Options, hass: Hass, env: Env) {
       content: `**Echo Hub** needs ${missing.join(" and ")} (install from HACS, then reload). See [requirements](${DOCS}).` }] }] };
   }
   const { type: _type, ...options } = config as Options & { type?: string };
+  // Optional cards may still be loading when the strategy runs, so wait briefly instead of only checking.
+  const advancedCamera = env.has("advanced-camera-card") || (await env.whenDefined("advanced-camera-card", 2000));
   try {
-    return build(templates as Record<string, unknown>, discover(hass, options, { advancedCamera: env.has("advanced-camera-card") }));
+    return build(templates as Record<string, unknown>, discover(hass, options, { advancedCamera }));
   } catch (err) {
     return { views: [{ title: "Echo Hub", path: "home", cards: [{ type: "markdown",
       content: `**Echo Hub** cannot use these options: ${(err as Error).message}. See [options](https://github.com/DynamotechLLC/echo-hub#option-1-strategy).` }] }] };

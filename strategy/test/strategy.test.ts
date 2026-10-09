@@ -33,6 +33,11 @@ describe("generateDashboard", () => {
     const c: any = await generateDashboard({}, hass, all);
     expect(c.views).toHaveLength(2);
   });
+  it("waits for Advanced Camera Card that loads after the strategy", async () => {
+    const late = { has: (t: string) => t !== "advanced-camera-card", whenDefined: async () => true };
+    const c: any = await generateDashboard({}, home as unknown as Hass, late);
+    expect(c.views[1].cards[0].custom_fields.cams.card.type).toBe("custom:advanced-camera-card");
+  });
   it("falls back to picture cameras without Advanced Camera Card", async () => {
     const c: any = await generateDashboard({}, home as unknown as Hass, env(["button-card", "card-mod"]));
     expect(c.views[1].cards[0].custom_fields.cams.card.type).toBe("grid");

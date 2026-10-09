@@ -1,4 +1,6 @@
 # Changelog
+## v0.1.2
+- Fix: the strategy waits for Advanced Camera Card instead of falling back to picture cards while it loads.
 ## v0.1.1
 - Fix: generator and copy-paste room panels were empty (auto-entities rejects entity_category rules). Fix: dock and rail pills no longer stretch when the row is short.
 ## v0.1.0
