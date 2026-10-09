@@ -15,7 +15,7 @@ All three options draw the same dashboard from the same templates (`src/template
 
 | Option | Setup | Updates | Needs | Customise |
 |---|---|---|---|---|
-| 1. Strategy | 2 lines of YAML | HACS | button-card, card-mod | the option keys below |
+| 1. Strategy | 2 lines of YAML | HACS | button-card | the option keys below |
 | 2. Generator | edit `layout.yaml`, run Python | re-run and paste | + auto-entities, Python 3.9+, PyYAML | every key |
 | 3. Copy-paste | edit area ids by hand | re-paste | + auto-entities | by hand |
 
@@ -23,8 +23,8 @@ All three options draw the same dashboard from the same templates (`src/template
 
 ## Requirements
 
-- Home Assistant 2026.10.0 or newer, and [HACS](https://hacs.xyz).
-- [button-card](https://github.com/custom-cards/button-card) and [card-mod](https://github.com/thomasloven/lovelace-card-mod): all options.
+- Home Assistant 2024.8.0 or newer, and [HACS](https://hacs.xyz).
+- [button-card](https://github.com/custom-cards/button-card): all options.
 - [auto-entities](https://github.com/thomasloven/lovelace-auto-entities): options 2 and 3.
 - Optional: [Advanced Camera Card](https://github.com/dermotduffy/advanced-camera-card) for the Cameras view (otherwise the built-in picture cards are used), and [kiosk-mode](https://github.com/NemesisRE/kiosk-mode) for wall panels.
 
@@ -63,7 +63,7 @@ Every option is optional:
 
 | Key | Default | Meaning |
 |---|---|---|
-| `favorites` | thermostat, lock, first camera | Tiles in the Favorites panel: entity ids, or `{entity, name, template}` |
+| `favorites` | thermostat, lock, first camera | Tiles in the Favorites panel: entity ids, or `{entity, name, template}`. Lights, fans, switches, media players, locks, cameras and thermostats get their own tile; anything else gets a plain tile that opens its details |
 | `rooms` | every area with lights, fans, switches or media players, by name | `{area, title, icon, extra}`; `extra` adds entities from outside the area |
 | `cameras` | every camera | Camera entity ids, or `{entity, name, ptz}` |
 | `doors` | binary sensors with device class door, garage door or opening | Shown in the Doors pill |
@@ -153,7 +153,7 @@ template:
 ## Troubleshooting
 
 - **"Echo Hub needs button-card…"**: install the named card from HACS, then reload the browser.
-- **Grey or blank tiles**: card-mod is missing, or the Echo Hub theme is not selected.
+- **Grey or blank tiles**: button-card is missing, or the Echo Hub theme is not selected.
 - **No rooms**: assign devices to areas. Rooms with only sensors are skipped.
 - **Clock frozen**: reload the page; it updates every 20 seconds.
 - **Cameras view empty**: set `cameras:`, or install Advanced Camera Card.
@@ -173,4 +173,4 @@ Delete the dashboard, then remove Echo Hub (and the theme, if unused) in HACS.
 
 ## Credits
 
-Built on [button-card](https://github.com/custom-cards/button-card), [card-mod](https://github.com/thomasloven/lovelace-card-mod), [auto-entities](https://github.com/thomasloven/lovelace-auto-entities), [Advanced Camera Card](https://github.com/dermotduffy/advanced-camera-card) and [kiosk-mode](https://github.com/NemesisRE/kiosk-mode).
+Built on [button-card](https://github.com/custom-cards/button-card), [auto-entities](https://github.com/thomasloven/lovelace-auto-entities), [Advanced Camera Card](https://github.com/dermotduffy/advanced-camera-card) and [kiosk-mode](https://github.com/NemesisRE/kiosk-mode).

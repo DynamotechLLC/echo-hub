@@ -8,11 +8,8 @@ const DOMAIN_TEMPLATES: Record<string, string> = {
 };
 type Card = Record<string, any>;
 
-const templateFor = (id: string) => {
-  const t = DOMAIN_TEMPLATES[id.split(".", 1)[0]];
-  if (!t) throw new Error("no Echo template for domain: " + id.split(".", 1)[0]);
-  return t;
-};
+// Domains without an Echo template get the plain echo-base tile.
+const templateFor = (id: string) => DOMAIN_TEMPLATES[id.split(".", 1)[0]] || "echo-base";
 const button = (template: string, extra: Card = {}): Card => ({ type: BUTTON, template, ...extra });
 const grid = (cards: Card[]): Card => ({ type: "grid", columns: 2, square: false, cards });
 const panel = (title: string, body: Card) => button("echo-panel", { name: title, custom_fields: { body: { card: body } } });
@@ -21,7 +18,7 @@ function tile(item: Tile, layout: Layout): Card {
   const extra: Card = { entity: item.entity };
   if (item.name) extra.name = item.name;
   const template = item.template || templateFor(item.entity);
-  if (template === "echo-camera" && layout.camera_card === "picture") extra.tap_action = { action: "more-info" };
+  if (template === "echo-base" || (template === "echo-camera" && layout.camera_card === "picture")) extra.tap_action = { action: "more-info" };
   return button(template, extra);
 }
 

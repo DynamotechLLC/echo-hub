@@ -4,7 +4,7 @@ import { discover } from "./discover";
 import type { Hass, Options } from "./types";
 
 export interface Env { has(tag: string): boolean; whenDefined(tag: string, ms: number): Promise<boolean> }
-const REQUIRED: Array<[string, string]> = [["button-card", "button-card"], ["card-mod", "card-mod"]];
+const REQUIRED: Array<[string, string]> = [["button-card", "button-card"]];
 const DOCS = "https://github.com/DynamotechLLC/echo-hub#requirements";
 
 export async function generateDashboard(config: Options, hass: Hass, env: Env) {
@@ -15,7 +15,12 @@ export async function generateDashboard(config: Options, hass: Hass, env: Env) {
       content: `**Echo Hub** needs ${missing.join(" and ")} (install from HACS, then reload). See [requirements](${DOCS}).` }] }] };
   }
   const { type: _type, ...options } = config as Options & { type?: string };
-  return build(templates as Record<string, unknown>, discover(hass, options, { advancedCamera: env.has("advanced-camera-card") }));
+  try {
+    return build(templates as Record<string, unknown>, discover(hass, options, { advancedCamera: env.has("advanced-camera-card") }));
+  } catch (err) {
+    return { views: [{ title: "Echo Hub", path: "home", cards: [{ type: "markdown",
+      content: `**Echo Hub** cannot use these options: ${(err as Error).message}. See [options](https://github.com/DynamotechLLC/echo-hub#option-1-strategy).` }] }] };
+  }
 }
 
 const browserEnv: Env = {

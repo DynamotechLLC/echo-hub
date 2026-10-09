@@ -41,6 +41,11 @@ describe("discover", () => {
     expect(discover(hass, {}, { advancedCamera: false }).camera_card).toBe("picture");
     expect(discover(hass, { camera_card: "picture" }, env).camera_card).toBe("picture");
   });
+  it("rejects duplicate or reserved room ids", () => {
+    for (const rooms of [[{ area: "kitchen" }, { area: "kitchen", title: "K2" }], [{ area: "x", id: "lock" }], [{ area: "x", id: "fav" }], [{ area: "x", id: "cameras" }]]) {
+      expect(() => discover(hass, { rooms }, env)).toThrow(/duplicate or reserved room id/);
+    }
+  });
   it("handles an empty home", () => {
     const empty = { areas: {}, devices: {}, entities: {}, states: {} } as Hass;
     const l = discover(empty, {}, env);

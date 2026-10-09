@@ -70,10 +70,8 @@ def normalize(layout):
 
 
 def template_for(entity_id):
-    domain = entity_id.split(".", 1)[0]
-    if domain not in DOMAIN_TEMPLATES:
-        raise ValueError("no Echo template for domain: " + domain)
-    return DOMAIN_TEMPLATES[domain]
+    """Domains without an Echo template get the plain echo-base tile."""
+    return DOMAIN_TEMPLATES.get(entity_id.split(".", 1)[0], "echo-base")
 
 
 def button(template, **extra):
@@ -87,7 +85,7 @@ def tile(item, layout):
     if item.get("name"):
         extra["name"] = item["name"]
     template = item.get("template") or template_for(item["entity"])
-    if template == "echo-camera" and layout["camera_card"] == "picture":
+    if template == "echo-base" or (template == "echo-camera" and layout["camera_card"] == "picture"):
         extra["tap_action"] = {"action": "more-info"}
     return button(template, **extra)
 
@@ -135,7 +133,10 @@ def room_body(room, layout):
 
     include = [by_domain(d) for d in ROOM_DOMAINS]
     for entity_id in room["extra"]:
-        include.append({"entity_id": entity_id, "options": {"type": BUTTON, "template": template_for(entity_id)}})
+        options = {"type": BUTTON, "template": template_for(entity_id)}
+        if options["template"] == "echo-base":
+            options["tap_action"] = {"action": "more-info"}
+        include.append({"entity_id": entity_id, "options": options})
     exclude = [{"entity_id": "*_segment_*"}] + [{"entity_id": p} for p in layout["media_exclude"]]
     exclude += [{"hidden_by": "user"}, {"hidden_by": "integration"},
                 {"entity_category": "config"}, {"entity_category": "diagnostic"}]

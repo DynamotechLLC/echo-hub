@@ -1,4 +1,4 @@
-import { DEFAULT_MEDIA_EXCLUDE, type Hass, type Layout, type Options, type Room, type Tile } from "./types";
+import { DEFAULT_MEDIA_EXCLUDE, RESERVED_IDS, type Hass, type Layout, type Options, type Room, type Tile } from "./types";
 
 const ROOM_DOMAINS = ["light", "fan", "switch", "media_player"];
 const DOOR_CLASSES = ["door", "garage_door", "opening"];
@@ -47,6 +47,13 @@ export function discover(hass: Hass, options: Options, env: { advancedCamera: bo
       id: r.id || "a_" + r.area, area: r.area, title: r.title || hass.areas[r.area]?.name || r.area,
       icon: r.icon || hass.areas[r.area]?.icon || "mdi:home", extra: r.extra ?? [], members: members(hass, r.area, exclude),
     }));
+    const seen = new Set<string>();
+    for (const r of rooms) {
+      if (seen.has(r.id) || RESERVED_IDS.includes(r.id) || r.id === "fav" || r.id === "cameras") {
+        throw new Error("duplicate or reserved room id: " + r.id);
+      }
+      seen.add(r.id);
+    }
   } else {
     rooms = Object.values(hass.areas)
       .map((a) => ({ id: "a_" + a.area_id, area: a.area_id, title: a.name, icon: a.icon || "mdi:home", extra: [], members: members(hass, a.area_id, exclude) }))

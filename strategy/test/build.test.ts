@@ -21,6 +21,11 @@ describe("build", () => {
     expect(body.cards.map((x: any) => x.template)).toEqual(["echo-room", "echo-light", "echo-plug"]);
     expect(body.cards[0].variables).toEqual({ area: "kitchen", extra: [] });
   });
+  it("falls back to echo-base for unsupported domains", () => {
+    const c = build(templates, discover(hass, { favorites: ["sensor.temp", "cover.garage"] }, { advancedCamera: true }));
+    const cards = rail(c).fav.card.custom_fields.body.card.cards;
+    expect(cards.map((x: any) => [x.template, x.tap_action])).toEqual([["echo-base", { action: "more-info" }], ["echo-base", { action: "more-info" }]]);
+  });
   it("has no JS under views", () => {
     expect(JSON.stringify(cfg().views)).not.toContain("[[[");
   });

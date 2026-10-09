@@ -89,6 +89,12 @@ class GenerateTest(unittest.TestCase):
         home = self.config["views"][1]["cards"][0]["custom_fields"]["home"]["card"]
         self.assertEqual((home["template"], home["variables"]["view"]), ("echo-round-view", "home"))
 
+    def test_unsupported_domain_falls_back(self):
+        cfg = g.build(self.templates, {"favorites": ["sensor.temp", "cover.garage"]})
+        cards = g.find_panel(cfg, "fav")["custom_fields"]["body"]["card"]["cards"]
+        self.assertEqual([(c["template"], c["tap_action"]) for c in cards], [("echo-base", {"action": "more-info"})] * 2)
+        self.assertEqual(g.validate(cfg), [])
+
     def test_validate_flags_js_under_views(self):
         bad = copy.deepcopy(self.config)
         bad["views"][0]["cards"][0]["name"] = "[[[ return 1 ]]]"
