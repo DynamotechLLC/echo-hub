@@ -50,10 +50,12 @@ function roomBody(room: Room, layout: Layout): Card {
   return grid(cards);
 }
 
+// Explicit max-content columns: area columns are auto and stretch when the row is short.
 function anchoredRow(template: string, cards: Array<[string, Card]>, gapKey: string): Card {
   return button(template, {
     custom_fields: Object.fromEntries(cards.map(([k, c]) => [k, { card: c }])),
-    styles: { grid: [{ "grid-template-areas": '"' + cards.map(([k]) => k).join(" ") + " " + gapKey + '"' }] },
+    styles: { grid: [{ "grid-template-areas": '"' + cards.map(([k]) => k).join(" ") + " " + gapKey + '"' },
+      { "grid-template-columns": `repeat(${cards.length}, max-content) 0px` }] },
   });
 }
 

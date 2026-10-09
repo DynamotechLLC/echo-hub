@@ -43,10 +43,17 @@ class GenerateTest(unittest.TestCase):
         self.assertEqual(body["card_param"], "cards")
         self.assertEqual([f["domain"] for f in body["filter"]["include"]], ["light", "fan", "switch", "media_player"])
         excl = body["filter"]["exclude"]
-        self.assertIn({"entity_category": "config"}, excl)
-        self.assertIn({"entity_category": "diagnostic"}, excl)
+        # auto-entities rejects entity_category rules and then renders nothing
+        self.assertFalse(any("entity_category" in rule for rule in excl))
         self.assertIn({"entity_id": "media_player.everywhere"}, excl)
         self.assertIn({"entity_id": "*_segment_*"}, excl)
+
+    def test_rows_use_max_content_columns(self):
+        # auto columns stretch when the row is short, so the first pill grew to hundreds of px
+        for key in ("dock", "rail"):
+            row = g.shell(self.config)["custom_fields"][key]["card"]
+            n = len(row["custom_fields"])
+            self.assertIn({"grid-template-columns": "repeat(%d, max-content) 0px" % n}, row["styles"]["grid"])
 
     def test_media_pill_gets_exclude(self):
         pill = g.dock_card(self.config, "media")

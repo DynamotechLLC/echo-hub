@@ -157,7 +157,7 @@ template:
 - **No rooms**: assign devices to areas. Rooms with only sensors are skipped.
 - **Clock frozen**: reload the page; it updates every 20 seconds.
 - **Cameras view empty**: set `cameras:`, or install Advanced Camera Card.
-- **A configuration switch shows in a room**: its integration did not give it an entity category. Hide it: Settings → the entity → **Visible** off.
+- **A configuration switch shows in a room** (options 2 and 3, or an integration that sets no entity category): hide it: Settings → the entity → **Visible** off.
 
 ## Updating
 

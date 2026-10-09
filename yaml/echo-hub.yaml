@@ -773,8 +773,6 @@ views:
                         - entity_id: media_player.everywhere
                         - hidden_by: user
                         - hidden_by: integration
-                        - entity_category: config
-                        - entity_category: diagnostic
             a_kitchen:
               card:
                 type: custom:button-card
@@ -825,8 +823,6 @@ views:
                         - entity_id: media_player.everywhere
                         - hidden_by: user
                         - hidden_by: integration
-                        - entity_category: config
-                        - entity_category: diagnostic
             a_bedroom:
               card:
                 type: custom:button-card
@@ -877,8 +873,6 @@ views:
                         - entity_id: media_player.everywhere
                         - hidden_by: user
                         - hidden_by: integration
-                        - entity_category: config
-                        - entity_category: diagnostic
             a_office:
               card:
                 type: custom:button-card
@@ -929,8 +923,6 @@ views:
                         - entity_id: media_player.everywhere
                         - hidden_by: user
                         - hidden_by: integration
-                        - entity_category: config
-                        - entity_category: diagnostic
             cameras:
               card:
                 type: custom:button-card
@@ -950,6 +942,7 @@ views:
           styles:
             grid:
             - grid-template-areas: '"fav a_living_room a_kitchen a_bedroom a_office cameras reg"'
+            - grid-template-columns: repeat(6, max-content) 0px
       dock:
         card:
           type: custom:button-card
@@ -1045,6 +1038,7 @@ views:
             grid:
             - grid-template-areas: '"home overview nav_a_living_room nav_a_kitchen nav_a_bedroom nav_a_office nav_cameras
                 media doors lockpill climate lights end"'
+            - grid-template-columns: repeat(12, max-content) 0px
 - title: Cameras
   path: cameras
   type: panel

@@ -26,6 +26,11 @@ describe("build", () => {
     const cards = rail(c).fav.card.custom_fields.body.card.cards;
     expect(cards.map((x: any) => [x.template, x.tap_action])).toEqual([["echo-base", { action: "more-info" }], ["echo-base", { action: "more-info" }]]);
   });
+  it("sizes dock and rail columns to their content", () => {
+    const grid = shell(cfg()).custom_fields.dock.card.styles.grid;
+    const n = Object.keys(shell(cfg()).custom_fields.dock.card.custom_fields).length;
+    expect(grid).toContainEqual({ "grid-template-columns": `repeat(${n}, max-content) 0px` });
+  });
   it("has no JS under views", () => {
     expect(JSON.stringify(cfg().views)).not.toContain("[[[");
   });

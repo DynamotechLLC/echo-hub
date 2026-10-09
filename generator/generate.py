@@ -138,8 +138,8 @@ def room_body(room, layout):
             options["tap_action"] = {"action": "more-info"}
         include.append({"entity_id": entity_id, "options": options})
     exclude = [{"entity_id": "*_segment_*"}] + [{"entity_id": p} for p in layout["media_exclude"]]
-    exclude += [{"hidden_by": "user"}, {"hidden_by": "integration"},
-                {"entity_category": "config"}, {"entity_category": "diagnostic"}]
+    # No entity_category rules: auto-entities rejects them and renders nothing.
+    exclude += [{"hidden_by": "user"}, {"hidden_by": "integration"}]
     return {"type": "custom:auto-entities", "show_empty": True,
             "card": {"type": "grid", "columns": 2, "square": False}, "card_param": "cards",
             "entities": [button("echo-room", name=room["title"], variables={"area": room["area"], "extra": room["extra"]})],
@@ -147,9 +147,11 @@ def room_body(room, layout):
 
 
 def anchored_row(template, cards, gap_key):
+    """Explicit max-content columns: area columns are auto and stretch when the row is short."""
     keys = [key for key, _ in cards]
     return button(template, custom_fields={key: {"card": card} for key, card in cards},
-                  styles={"grid": [{"grid-template-areas": '"' + " ".join(keys) + " " + gap_key + '"'}]})
+                  styles={"grid": [{"grid-template-areas": '"' + " ".join(keys) + " " + gap_key + '"'},
+                                   {"grid-template-columns": "repeat(%d, max-content) 0px" % len(keys)}]})
 
 
 def build(templates, layout, room_bodies=None):
