@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Theme colours or fonts
+    url: https://github.com/DynamotechLLC/echo-hub-ha-theme/issues/new/choose
+    about: Problems with the Echo Hub theme itself go to the theme repository.
+  - name: Troubleshooting
+    url: https://github.com/DynamotechLLC/echo-hub#troubleshooting
+    about: Common problems and their fixes.

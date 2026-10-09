@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest a new card, option or behaviour for Echo Hub.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What you are trying to do with your dashboard today, and what gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+      description: How it should look or behave. A sketch or a screenshot from another dashboard helps.
+    validations:
+      required: true
+  - type: dropdown
+    id: option
+    attributes:
+      label: Which install option does it apply to?
+      multiple: true
+      options:
+        - "Option 1: Strategy"
+        - "Option 2: Generator"
+        - "Option 3: Copy-paste YAML"
+        - All of them
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
