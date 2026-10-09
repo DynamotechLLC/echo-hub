@@ -1,0 +1,786 @@
+# Echo Hub button-card templates (github.com/DynamotechLLC/echo-hub). Shared by the
+# strategy, the generator and the copy-paste YAML. All JavaScript lives here, never
+# in the view tree. Colours come from the Echo Hub theme's --echo-* variables, with
+# light-mode fallbacks so the cards still render under another theme.
+
+# ---------- shared bases ----------
+echo-base:
+  variables:
+    on_states:
+      - "on"
+  show_name: true
+  show_state: true
+  show_icon: true
+  tap_action:
+    action: toggle
+  hold_action:
+    action: more-info
+  custom_fields:
+    more: '<ha-icon icon="mdi:dots-vertical" style="width: 20px"></ha-icon>'
+  styles:
+    card:
+      - height: 120px
+      - padding: 12px 10px 10px 14px
+      - border-radius: 20px
+      - box-shadow: none
+      - background: "[[[ return variables.on_states.includes(entity.state) ? 'var(--echo-accent, #1E8BB0)' : 'var(--echo-tile, #F4F6F8)'; ]]]"
+      - color: "[[[ return variables.on_states.includes(entity.state) ? '#FFFFFF' : 'var(--primary-text-color)'; ]]]"
+    grid:
+      - grid-template-areas: '"n n" "s s" "i more"'
+      - grid-template-columns: 1fr min-content
+      - grid-template-rows: min-content min-content 1fr
+    name:
+      - justify-self: start
+      - text-align: left
+      - font-size: 15px
+      - font-weight: 500
+      - color: inherit
+    state:
+      - justify-self: start
+      - font-size: 13px
+      - color: inherit
+      - opacity: "0.8"
+    img_cell:
+      - justify-self: start
+      - align-self: end
+      - width: 28px
+      - height: 28px
+    icon:
+      - width: 26px
+      - color: inherit
+    custom_fields:
+      more:
+        - align-self: end
+        - justify-self: end
+        - color: inherit
+
+echo-weather:
+  variables:
+    forecast_sensor: null
+    icons:
+      clear-night: mdi:weather-night
+      cloudy: mdi:weather-cloudy
+      exceptional: mdi:alert-circle-outline
+      fog: mdi:weather-fog
+      hail: mdi:weather-hail
+      lightning: mdi:weather-lightning
+      lightning-rainy: mdi:weather-lightning-rainy
+      partlycloudy: mdi:weather-partly-cloudy
+      pouring: mdi:weather-pouring
+      rainy: mdi:weather-rainy
+      snowy: mdi:weather-snowy
+      snowy-rainy: mdi:weather-snowy-rainy
+      sunny: mdi:weather-sunny
+      windy: mdi:weather-windy
+      windy-variant: mdi:weather-windy-variant
+  triggers_update: all
+  show_name: false
+  show_state: false
+  show_icon: false
+  tap_action:
+    action: none
+  styles:
+    card:
+      - background: none
+      - box-shadow: none
+      - border-radius: 0
+      - padding: 0
+
+# ---------- page structure ----------
+echo-shell:
+  show_name: false
+  show_state: false
+  show_icon: false
+  tap_action:
+    action: none
+  # Nested cards are block hosts with auto height; make the rail and dock hosts
+  # fill their grid cells so the panels below can size to the rail.
+  extra_styles: |
+    #rail > *, #dock > * { display: block; height: 100%; }
+  styles:
+    card:
+      - height: calc(100dvh - var(--kiosk-header-height, var(--header-height, 0px)))
+      - box-sizing: border-box
+      - padding: 16px 24px 14px 24px
+      - background: none
+      - box-shadow: none
+      - border-radius: 0
+      - overflow: hidden
+    grid:
+      - grid-template-areas: '"top top" "side rail" "dock dock"'
+      - grid-template-columns: 220px minmax(0, 1fr)
+      - grid-template-rows: 64px minmax(0, 1fr) 72px
+      - row-gap: 12px
+      - column-gap: 16px
+      - height: 100%
+    custom_fields:
+      top:
+        - min-width: 0
+      side:
+        - align-self: start
+      rail:
+        - min-width: 0
+        - height: 100%
+      dock:
+        - min-width: 0
+
+echo-camshell:
+  show_icon: false
+  show_state: false
+  show_name: true
+  tap_action:
+    action: none
+  extra_styles: |
+    #cams > * { display: block; height: 100%; }
+  styles:
+    card:
+      - height: calc(100dvh - var(--kiosk-header-height, var(--header-height, 0px)))
+      - box-sizing: border-box
+      - padding: 16px 24px
+      - background: none
+      - box-shadow: none
+      - border-radius: 0
+      - overflow: hidden
+    grid:
+      - grid-template-areas: '"home n" "cams cams"'
+      - grid-template-columns: 48px 1fr
+      - grid-template-rows: 48px minmax(0, 1fr)
+      - row-gap: 12px
+      - column-gap: 16px
+      - height: 100%
+    name:
+      - justify-self: start
+      - font-size: 28px
+      - font-weight: 500
+    custom_fields:
+      cams:
+        - min-width: 0
+        - height: 100%
+        - border-radius: 20px
+        - overflow: hidden
+
+echo-round:
+  show_name: false
+  show_state: false
+  styles:
+    card:
+      - width: 48px
+      - height: 48px
+      - border-radius: 50%
+      - padding: 0
+      - background: var(--echo-pill, rgba(255,255,255,0.78))
+      - box-shadow: none
+    icon:
+      - width: 22px
+      - color: var(--primary-text-color)
+
+echo-topbar:
+  template: echo-weather
+  custom_fields:
+    overview:
+      card:
+        type: custom:button-card
+        template: echo-round
+        icon: mdi:view-dashboard
+        tap_action:
+          action: navigate
+          navigation_path: /lovelace
+    profile:
+      card:
+        type: custom:button-card
+        template: echo-round
+        icon: mdi:account-cog
+        tap_action:
+          action: navigate
+          navigation_path: /profile
+    now: |
+      [[[
+        const t = entity ? Math.round(Number(entity.attributes.temperature)) : null;
+        const icon = entity ? (variables.icons[entity.state] || 'mdi:weather-cloudy') : 'mdi:weather-cloudy';
+        const tf = hass.locale ? hass.locale.time_format : undefined;
+        const h12 = tf === '12' ? true : tf === '24' ? false : undefined;
+        const lang = hass.locale ? hass.locale.language : undefined;
+        const clock = new Date().toLocaleTimeString(lang, {hour: 'numeric', minute: '2-digit', hour12: h12}).replace(/\s?[AP]M$/i, '');
+        if (!this._echoTick) this._echoTick = setInterval(() => this.requestUpdate('_config'), 20000);
+        return `<span style="display:flex;align-items:center;gap:14px">
+          <ha-icon icon="${icon}" style="--mdc-icon-size:30px;color:var(--echo-warn,#E8A33D)"></ha-icon>
+          <span style="font-size:28px">${t == null || isNaN(t) ? '' : t + '°'}</span>
+          <span style="font-size:44px;font-weight:600;margin-left:12px">${clock}</span></span>`;
+      ]]]
+  styles:
+    grid:
+      - grid-template-areas: '"overview profile . now"'
+      - grid-template-columns: 48px 48px 1fr auto
+      - column-gap: 16px
+      - align-items: center
+      - height: 64px
+
+echo-side:
+  template: echo-weather
+  custom_fields:
+    date: |
+      [[[
+        const d = new Date();
+        const day = d.toLocaleDateString(undefined, {weekday: 'long'});
+        const md = d.toLocaleDateString(undefined, {month: 'long', day: 'numeric'});
+        return `<div style="font-size:38px;font-weight:500;line-height:1.15;text-align:left">${day},<br>${md}</div>`;
+      ]]]
+    cal: '<ha-icon icon="mdi:calendar-month" style="--mdc-icon-size:26px;color:var(--echo-accent,#1E8BB0)"></ha-icon>'
+    wx: |
+      [[[
+        if (!entity) return '';
+        const t = Math.round(Number(entity.attributes.temperature));
+        const f = variables.forecast_sensor ? states[variables.forecast_sensor] : null;
+        const hi = f && !isNaN(Number(f.state)) ? Math.round(Number(f.state)) : null;
+        const lo = f && f.attributes.low != null ? Math.round(Number(f.attributes.low)) : null;
+        const hum = entity.attributes.humidity;
+        const icon = variables.icons[entity.state] || 'mdi:weather-cloudy';
+        return `<div style="text-align:left">
+          <div style="display:flex;align-items:center;gap:8px">
+            <ha-icon icon="${icon}" style="--mdc-icon-size:64px;color:var(--echo-warn,#E8A33D)"></ha-icon>
+            <span style="font-size:60px;font-weight:500">${isNaN(t) ? '--' : t + '°'}</span></div>
+          <div style="font-size:16px;margin-top:6px">Home</div>
+          <div style="font-size:16px;color:var(--secondary-text-color)">${hum == null ? '' : 'Humidity ' + hum + '%'}</div>
+          <div style="font-size:16px;color:var(--secondary-text-color)">${hi == null ? '' : 'H: ' + hi + '°  L: ' + (lo == null ? '--' : lo) + '°'}</div></div>`;
+      ]]]
+  styles:
+    grid:
+      - grid-template-areas: '"date" "cal" "wx"'
+      - grid-template-rows: auto auto auto
+      - row-gap: 14px
+      - justify-items: start
+    custom_fields:
+      cal:
+        - background: var(--echo-pill, rgba(255,255,255,0.78))
+        - border-radius: 12px
+        - padding: 8px
+        - margin-top: 8px
+      wx:
+        - margin-top: 36px
+
+echo-rail:
+  show_name: false
+  show_state: false
+  show_icon: false
+  tap_action:
+    action: none
+  custom_fields:
+    reg: |
+      [[[
+        const el = this;
+        window.echoHub = {
+          scrollTo: (id) => {
+            const target = el.shadowRoot && el.shadowRoot.getElementById(id);
+            if (target) target.scrollIntoView({behavior: 'auto', inline: 'start', block: 'nearest'});
+          },
+        };
+        return '';
+      ]]]
+  extra_styles: |
+    #container > div:not(#reg) { scroll-snap-align: start; height: 100%; }
+    #container > div:not(#reg) > * { display: block; height: 100%; }
+  styles:
+    card:
+      - height: 100%
+      - overflow-x: auto
+      - overflow-y: hidden
+      - scroll-snap-type: x mandatory
+      - scrollbar-width: none
+      - background: none
+      - box-shadow: none
+      - border-radius: 0
+      - padding: 0
+    grid:
+      - grid-auto-flow: column
+      - grid-auto-columns: max-content
+      - grid-template-rows: 100%
+      - column-gap: 16px
+      - height: 100%
+
+echo-panel:
+  show_icon: false
+  show_state: false
+  show_name: true
+  tap_action:
+    action: none
+  styles:
+    card:
+      - width: 348px
+      - height: 100%
+      - box-sizing: border-box
+      - padding: 14px
+      - border-radius: 24px
+      - background: var(--echo-panel, rgba(255,255,255,0.35))
+      - box-shadow: none
+    grid:
+      - grid-template-areas: '"n" "body"'
+      - grid-template-rows: min-content minmax(0, 1fr)
+      - height: 100%
+      - align-items: stretch
+    name:
+      - justify-self: start
+      - font-size: 18px
+      - font-weight: 500
+      - padding: 2px 4px 10px 4px
+    custom_fields:
+      body:
+        - display: block
+        - overflow-y: auto
+        - scrollbar-width: none
+        - min-height: 0
+
+echo-dock:
+  show_name: false
+  show_state: false
+  show_icon: false
+  tap_action:
+    action: none
+  styles:
+    card:
+      - height: 72px
+      - overflow-x: auto
+      - overflow-y: hidden
+      - scrollbar-width: none
+      - background: none
+      - box-shadow: none
+      - border-radius: 0
+      - padding: 0
+    grid:
+      - grid-auto-flow: column
+      - grid-auto-columns: max-content
+      - column-gap: 12px
+      - align-items: center
+
+# ---------- dock pills ----------
+echo-pill:
+  variables:
+    circle: "var(--echo-accent, #1E8BB0)"
+  show_icon: true
+  show_name: true
+  show_state: false
+  show_label: false
+  tap_action:
+    action: more-info
+  styles:
+    card:
+      - height: 56px
+      - padding: 6px 18px 6px 6px
+      - border-radius: 28px
+      - background: var(--echo-pill, rgba(255,255,255,0.78))
+      - box-shadow: none
+      - white-space: nowrap
+    grid:
+      - grid-template-areas: '"i n" "i l"'
+      - grid-template-columns: 44px auto
+      - column-gap: 10px
+    img_cell:
+      - width: 44px
+      - height: 44px
+      - border-radius: 50%
+      - background: "[[[ return variables.circle; ]]]"
+    icon:
+      - width: 24px
+      - color: "#FFFFFF"
+    name:
+      - justify-self: start
+      - align-self: center
+      - grid-row: 1 / span 2
+      - font-size: 15px
+      - font-weight: 500
+    label:
+      - justify-self: start
+      - align-self: start
+      - font-size: 12px
+      - color: var(--secondary-text-color)
+
+echo-pill-status:
+  template: echo-pill
+  show_label: true
+  styles:
+    name:
+      - align-self: end
+      - grid-row: 1
+    label:
+      - grid-row: 2
+
+echo-nav:
+  template: echo-pill
+  variables:
+    target: fav
+    home: false
+    circle: "[[[ return variables.home ? 'var(--echo-home, #2E8B6E)' : '#5B6670'; ]]]"
+  tap_action:
+    action: javascript
+    javascript: "[[[ if (window.echoHub) window.echoHub.scrollTo(variables.target); ]]]"
+  styles:
+    card:
+      - padding: "[[[ return variables.home ? '6px' : '6px 18px 6px 6px'; ]]]"
+
+echo-pill-view:
+  template: echo-pill
+  variables:
+    view: home
+  tap_action:
+    action: navigate
+    navigation_path: "[[[ return location.pathname.split('/').slice(0, 2).join('/') + '/' + variables.view; ]]]"
+
+echo-round-view:
+  template: echo-round
+  variables:
+    view: home
+  tap_action:
+    action: navigate
+    navigation_path: "[[[ return location.pathname.split('/').slice(0, 2).join('/') + '/' + variables.view; ]]]"
+
+echo-pill-media:
+  template: echo-pill-status
+  triggers_update: all
+  name: Active Media
+  icon: mdi:play-circle
+  show_label: true
+  variables:
+    circle: "#8E6CEF"
+    exclude: []
+  label: |
+    [[[
+      const rx = variables.exclude.map((p) => new RegExp('^' + p.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$'));
+      const n = Object.keys(states).filter((id) => id.startsWith('media_player.')
+        && !rx.some((r) => r.test(id)) && states[id].state === 'playing').length;
+      return n ? `${n} playing` : 'Nothing playing';
+    ]]]
+  tap_action:
+    action: none
+
+echo-pill-doors:
+  template: echo-pill-status
+  triggers_update: all
+  name: Doors
+  show_label: true
+  variables:
+    doors: []
+    circle: |
+      [[[
+        const s = variables.doors.map((id) => states[id] ? states[id].state : 'unavailable');
+        return s.every((x) => x === 'off') ? 'var(--echo-ok, #2E9E6B)' : 'var(--echo-warn, #E8A33D)';
+      ]]]
+  icon: mdi:door
+  label: |
+    [[[
+      const s = variables.doors.map((id) => states[id] ? states[id].state : 'unavailable');
+      const open = s.filter((x) => x === 'on').length;
+      const offline = s.filter((x) => x === 'unavailable' || x === 'unknown').length;
+      const parts = [];
+      if (open) parts.push(`${open} open`);
+      if (offline) parts.push(`${offline} offline`);
+      return parts.length ? parts.join(' • ') : 'All closed';
+    ]]]
+  tap_action:
+    action: none
+
+echo-pill-lock:
+  template: echo-pill-status
+  name: Lock
+  show_label: true
+  variables:
+    circle: "[[[ return entity && entity.state === 'locked' ? 'var(--echo-ok, #2E9E6B)' : 'var(--echo-warn, #E8A33D)'; ]]]"
+  icon: "[[[ return entity && entity.state === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant'; ]]]"
+  label: "[[[ return entity ? entity.state.charAt(0).toUpperCase() + entity.state.slice(1) : 'Unavailable'; ]]]"
+
+echo-pill-climate:
+  template: echo-pill-status
+  name: Climate
+  show_label: true
+  variables:
+    circle: |
+      [[[
+        if (!entity) return 'var(--secondary-text-color)';
+        if (entity.state === 'heat') return 'var(--echo-heat, #E5484D)';
+        if (entity.state === 'cool') return 'var(--echo-cool, #2F80ED)';
+        return 'var(--secondary-text-color)';
+      ]]]
+  icon: mdi:thermostat
+  label: |
+    [[[
+      if (!entity || entity.state === 'off') return 'Off';
+      const t = entity.attributes.temperature;
+      const mode = entity.state.charAt(0).toUpperCase() + entity.state.slice(1);
+      return t == null ? mode : `${mode} to ${Math.round(t)}°`;
+    ]]]
+
+echo-pill-lights:
+  template: echo-pill-status
+  triggers_update: all
+  name: Lights
+  icon: mdi:lightbulb
+  show_label: true
+  variables:
+    target: fav
+  label: |
+    [[[
+      const n = Object.keys(states).filter((id) => id.startsWith('light.') && !id.includes('_segment_')
+        && states[id].state === 'on').length;
+      return `${n} on`;
+    ]]]
+  tap_action:
+    action: javascript
+    javascript: "[[[ if (window.echoHub) window.echoHub.scrollTo(variables.target); ]]]"
+
+# ---------- tiles ----------
+echo-room:
+  triggers_update: all
+  variables:
+    area: ""
+    extra: []
+    lights: |
+      [[[
+        return Object.keys(states).filter((id) => {
+          if (!id.startsWith('light.') || id.includes('_segment_')) return false;
+          if (variables.extra.includes(id)) return true;
+          const e = hass.entities[id];
+          if (!e || e.hidden) return false;
+          const dev = e.device_id ? hass.devices[e.device_id] : null;
+          return (e.area_id || (dev ? dev.area_id : null)) === variables.area;
+        });
+      ]]]
+  show_icon: false
+  show_name: true
+  show_state: false
+  show_label: true
+  icon: mdi:lightbulb-group
+  label: |
+    [[[
+      const on = variables.lights.filter((id) => states[id].state === 'on');
+      if (!on.length) return variables.lights.length ? 'All off' : 'No lights';
+      const b = on.map((id) => states[id].attributes.brightness).filter((x) => x != null);
+      const avg = b.length ? ` • ${Math.round(b.reduce((s, x) => s + x, 0) / b.length / 2.55)}%` : '';
+      return `${on.length} On${avg}`;
+    ]]]
+  custom_fields:
+    alloff: |
+      [[[
+        return variables.lights.some((id) => states[id].state === 'on')
+          ? '<span style="display:flex;align-items:center;gap:6px"><ha-icon icon="mdi:lightbulb-off-outline" style="--mdc-icon-size:18px"></ha-icon>Turn all off</span>'
+          : '';
+      ]]]
+  tap_action:
+    action: perform-action
+    perform_action: light.turn_off
+    target:
+      entity_id: "[[[ return variables.lights.length ? variables.lights : 'none'; ]]]"
+  hold_action:
+    action: none
+  styles:
+    card:
+      - height: 120px
+      - padding: 12px 10px 10px 14px
+      - border-radius: 20px
+      - box-shadow: none
+      - background: "[[[ return variables.lights.some((id) => states[id].state === 'on') ? 'var(--echo-accent, #1E8BB0)' : 'var(--echo-tile, #F4F6F8)'; ]]]"
+      - color: "[[[ return variables.lights.some((id) => states[id].state === 'on') ? '#FFFFFF' : 'var(--primary-text-color)'; ]]]"
+    grid:
+      - grid-template-areas: '"n" "l" "alloff"'
+      - grid-template-columns: 1fr
+      - grid-template-rows: min-content min-content 1fr
+    name:
+      - justify-self: start
+      - font-size: 15px
+      - font-weight: 500
+      - color: inherit
+    label:
+      - justify-self: start
+      - font-size: 13px
+      - opacity: "0.8"
+      - color: inherit
+    custom_fields:
+      alloff:
+        - justify-self: start
+        - align-self: end
+        - font-size: 13px
+        - color: inherit
+
+echo-light:
+  template: echo-base
+  icon: mdi:lightbulb
+  state_display: |
+    [[[
+      if (entity.state !== 'on') return entity.state === 'off' ? 'Off' : entity.state;
+      const b = entity.attributes.brightness;
+      return b == null ? 'On' : `On • ${Math.round(b / 2.55)}%`;
+    ]]]
+
+echo-light-tall:
+  template: echo-light
+  styles:
+    card:
+      - height: 252px
+      - background: |
+          [[[
+            if (entity.state !== 'on') return 'var(--echo-tile, #F4F6F8)';
+            const p = Math.round((entity.attributes.brightness == null ? 255 : entity.attributes.brightness) / 2.55);
+            return `linear-gradient(to top, var(--echo-accent-deep, #136F8F) ${p}%, var(--echo-accent, #1E8BB0) ${p}%)`;
+          ]]]
+
+echo-fan:
+  template: echo-base
+  icon: mdi:fan
+  state_display: "[[[ return entity.state === 'on' ? 'On' : entity.state === 'off' ? 'Off' : entity.state; ]]]"
+  extra_styles: |
+    @keyframes echo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  styles:
+    icon:
+      - animation: "[[[ return entity.state === 'on' ? 'echo-spin 2s linear infinite' : 'none'; ]]]"
+
+echo-plug:
+  template: echo-base
+  icon: mdi:power-socket-us
+  state_display: "[[[ return entity.state === 'on' ? 'On' : entity.state === 'off' ? 'Off' : entity.state; ]]]"
+
+echo-media:
+  template: echo-base
+  variables:
+    on_states:
+      - playing
+  tap_action:
+    action: more-info
+  state_display: |
+    [[[
+      const s = entity.state;
+      if (s === 'playing') return entity.attributes.media_title ? `Playing • ${entity.attributes.media_title}` : 'Playing';
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    ]]]
+
+echo-lock:
+  template: echo-base
+  variables:
+    on_states: []
+  tap_action:
+    action: more-info
+  icon: "[[[ return entity.state === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant'; ]]]"
+  state_display: "[[[ return entity.state.charAt(0).toUpperCase() + entity.state.slice(1); ]]]"
+  styles:
+    icon:
+      - color: "[[[ return entity.state === 'locked' ? 'var(--echo-ok, #2E9E6B)' : 'var(--echo-warn, #E8A33D)'; ]]]"
+
+echo-camera:
+  show_icon: false
+  show_name: true
+  show_state: true
+  tap_action:
+    action: navigate
+    navigation_path: "[[[ return location.pathname.split('/').slice(0, 2).join('/') + '/cameras?advanced-camera-card-action.cams.camera_select=' + entity.entity_id; ]]]"
+  hold_action:
+    action: more-info
+  state_display: "[[[ return entity.state.charAt(0).toUpperCase() + entity.state.slice(1); ]]]"
+  styles:
+    card:
+      - height: 120px
+      - padding: 12px
+      - border-radius: 20px
+      - box-shadow: none
+      - color: "#FFFFFF"
+      - text-shadow: 0 1px 3px rgba(0,0,0,0.6)
+      - background-color: "#3A444E"
+      - background-image: "[[[ return entity.attributes.entity_picture ? `url(${entity.attributes.entity_picture})` : 'none'; ]]]"
+      - background-size: cover
+      - background-position: center
+    grid:
+      - grid-template-areas: '"n" "s" "."'
+      - grid-template-rows: min-content min-content 1fr
+    name:
+      - justify-self: start
+      - font-size: 15px
+      - font-weight: 500
+    state:
+      - justify-self: start
+      - font-size: 13px
+
+echo-thermostat:
+  show_icon: false
+  show_name: true
+  show_state: true
+  tap_action:
+    action: more-info
+  state_display: |
+    [[[
+      const mode = entity.state.charAt(0).toUpperCase() + entity.state.slice(1);
+      const cur = entity.attributes.current_temperature;
+      return cur == null ? mode : `${mode} • ${Math.round(cur)}°`;
+    ]]]
+  custom_fields:
+    temp: "[[[ const t = entity.attributes.temperature; return t == null ? '--' : `${Math.round(t)}°`; ]]]"
+    down:
+      card:
+        type: custom:button-card
+        template: echo-step
+        entity: "[[[ return entity.entity_id; ]]]"
+        icon: mdi:chevron-down
+        variables:
+          step: -1
+    up:
+      card:
+        type: custom:button-card
+        template: echo-step
+        entity: "[[[ return entity.entity_id; ]]]"
+        icon: mdi:chevron-up
+        variables:
+          step: 1
+  styles:
+    card:
+      - height: 252px
+      - padding: 12px 14px 14px 14px
+      - border-radius: 20px
+      - box-shadow: none
+      - background: "var(--echo-tile, #F4F6F8)"
+    grid:
+      - grid-template-areas: '"n n" "s s" "temp temp" "down up"'
+      - grid-template-columns: 1fr 1fr
+      - grid-template-rows: min-content min-content 1fr min-content
+      - column-gap: 10px
+    name:
+      - justify-self: start
+      - font-size: 15px
+      - font-weight: 500
+    state:
+      - justify-self: start
+      - font-size: 13px
+      - color: var(--secondary-text-color)
+    custom_fields:
+      temp:
+        - font-size: 52px
+        - font-weight: 500
+        - color: |
+            [[[
+              if (entity.state === 'heat') return 'var(--echo-heat, #E5484D)';
+              if (entity.state === 'cool') return 'var(--echo-cool, #2F80ED)';
+              return 'var(--primary-text-color)';
+            ]]]
+      down:
+        - display: "[[[ return entity.attributes.temperature == null ? 'none' : 'block'; ]]]"
+      up:
+        - display: "[[[ return entity.attributes.temperature == null ? 'none' : 'block'; ]]]"
+
+echo-step:
+  variables:
+    step: 1
+  show_name: false
+  show_state: false
+  show_icon: true
+  tap_action:
+    action: perform-action
+    perform_action: climate.set_temperature
+    target:
+      entity_id: "[[[ return entity.entity_id; ]]]"
+    data:
+      temperature: "[[[ return Number(entity.attributes.temperature) + Number(variables.step); ]]]"
+  hold_action:
+    action: none
+  styles:
+    card:
+      - height: 40px
+      - padding: 0
+      - border-radius: 20px
+      - box-shadow: none
+      - background: "var(--echo-pill, #FFFFFF)"
+    icon:
+      - width: 22px
+      - color: var(--primary-text-color)
