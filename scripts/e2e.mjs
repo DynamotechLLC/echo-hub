@@ -201,7 +201,9 @@ async function check(browser, tokens, path, { rooms }) {
   const roomPanels = r.panels.filter((p) => p.id !== "fav" && p.id !== "cameras");
   if (rooms && !roomPanels.length) problems.push("no room panels");
   if (rooms) for (const p of roomPanels) if (p.tiles <= 1) problems.push(`room ${p.id} is empty`);
-  const relevant = errors.filter((e) => /button-card|auto-entities|echo|strategy|template/i.test(e));
+  // Our code fails as template errors or in echo-hub.js. Not button-card internals: on 2024.8 button-card 7.0.1
+  // throws once while auto-entities is still loading, then renders on the next update (checked above).
+  const relevant = errors.filter((e) => /ButtonCardJSTemplateError|echo-hub|strategy/i.test(e));
   if (relevant.length) problems.push(`console: ${relevant.slice(0, 3).join(" | ")}`);
   log(path, problems.length ? "FAIL " + problems.join("; ") : `ok (${r.panels.length} panels, clock ${r.clock})`);
   return problems;
