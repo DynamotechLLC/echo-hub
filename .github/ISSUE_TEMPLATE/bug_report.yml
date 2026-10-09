@@ -24,6 +24,7 @@ body:
     attributes:
       label: How do you install Echo Hub?
       options:
+        - Choose one
         - "Option 1: Strategy (custom:echo-hub)"
         - "Option 2: Generator"
         - "Option 3: Copy-paste YAML"
