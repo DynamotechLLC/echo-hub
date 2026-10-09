@@ -1,0 +1,24 @@
+# Echo Hub layout. Copy to layout.yaml, change the entity ids and area ids to yours,
+# then: python3 generator/generate.py layout.yaml > echo-hub.yaml
+# Every key is optional. Area ids: Settings > Areas, labels & zones > area > ⋮ > Settings (the "Area ID").
+favorites:                     # tiles in the first panel, in this order
+  - climate.thermostat
+  - lock.front_door
+  - {entity: light.kitchen, name: Kitchen, template: echo-light-tall}
+  - light.living_room
+rooms:                         # one panel and one dock pill per room
+  - {area: living_room, title: Living Room, icon: "mdi:sofa"}
+  - {area: kitchen, title: Kitchen, icon: "mdi:stove"}
+  - {area: bedroom, title: Bedroom, icon: "mdi:bed"}
+  - {area: office, title: Office, icon: "mdi:desk"}
+cameras:                       # Cameras panel, Cameras view and dock pill; remove to hide them
+  - {entity: camera.front_door, name: Front Door}
+doors: [binary_sensor.front_door]
+lock: lock.front_door
+climate: climate.thermostat
+weather: weather.home
+forecast_sensor: null          # optional: a sensor whose state is today's high and attribute `low` the low
+media_exclude: ["media_player.this_device*", "media_player.everywhere"]
+kiosk_users: []                # e.g. ["Tablet"] (needs kiosk-mode)
+camera_card: advanced          # advanced (Advanced Camera Card) or picture (built-in cards)
+overview_path: /lovelace
