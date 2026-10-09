@@ -8,5 +8,12 @@
     "build": "npm run embed && esbuild strategy/src/echo-hub-strategy.ts --bundle --minify --format=esm --target=es2020 --outfile=dist/echo-hub.js",
     "test": "npm run embed && vitest run"
   },
-  "devDependencies": {"esbuild": "^0.24.0", "js-yaml": "^4.1.0", "typescript": "^5.6.0", "vitest": "^2.1.0", "@types/node": "^20.0.0"}
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.24.0",
+    "js-yaml": "^4.1.0",
+    "playwright": "^1.48.2",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
 }

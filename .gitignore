@@ -1,3 +1,4 @@
 node_modules/
 strategy/src/templates.json
 __pycache__/
+e2e-results/

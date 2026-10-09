@@ -57,8 +57,9 @@ def normalize(layout):
     out["cameras"] = [_tile_item(i) for i in out["cameras"]]
     rooms, seen = [], set()
     for room in out["rooms"]:
-        r = {"id": room.get("id") or "a_" + room["area"], "area": room["area"], "title": room["title"],
-             "icon": room.get("icon") or "mdi:home", "extra": list(room.get("extra", []))}
+        r = {"id": room.get("id") or "a_" + room["area"], "area": room["area"],
+             "title": room.get("title") or room["area"].replace("_", " ").title(),
+             "icon": room.get("icon") or "mdi:home", "extra": list(room.get("extra") or [])}
         if r["id"] in seen or r["id"] in RESERVED_IDS or r["id"] in ("fav", "cameras"):
             raise ValueError("duplicate or reserved room id: " + r["id"])
         seen.add(r["id"])
@@ -178,7 +179,7 @@ def build(templates, layout, room_bodies=None):
     if layout["climate"]:
         pills.append(("climate", button("echo-pill-climate", entity=layout["climate"])))
     pills.append(("lights", button("echo-pill-lights")))
-    top, side = button("echo-topbar"), button("echo-side")
+    top, side = button("echo-topbar", variables={"overview_path": layout["overview_path"]}), button("echo-side")
     if layout["weather"]:
         top["entity"] = side["entity"] = layout["weather"]
     if layout["forecast_sensor"]:

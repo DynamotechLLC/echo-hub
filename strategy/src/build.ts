@@ -1,3 +1,4 @@
+import { globToRegExp } from "./discover";
 import type { Layout, Room, Tile } from "./types";
 
 const BUTTON = "custom:button-card";
@@ -46,7 +47,11 @@ function camerasView(layout: Layout): Card {
 
 function roomBody(room: Room, layout: Layout): Card {
   const cards = [button("echo-room", { name: room.title, variables: { area: room.area, extra: room.extra } })];
-  for (const id of [...room.members, ...room.extra]) cards.push(tile({ entity: id }, layout));
+  // Extras follow the auto-entities rules of the generator: no duplicates, segments or media_exclude matches.
+  const exclude = layout.media_exclude.map(globToRegExp);
+  const extra = room.extra.filter((id, i) => room.extra.indexOf(id) === i && !room.members.includes(id)
+    && !id.includes("_segment_") && !exclude.some((r) => r.test(id)));
+  for (const id of [...room.members, ...extra]) cards.push(tile({ entity: id }, layout));
   return grid(cards);
 }
 
@@ -74,7 +79,7 @@ export function build(templates: Record<string, unknown>, layout: Layout) {
   if (layout.lock) pills.push(["lockpill", button("echo-pill-lock", { entity: layout.lock })]);
   if (layout.climate) pills.push(["climate", button("echo-pill-climate", { entity: layout.climate })]);
   pills.push(["lights", button("echo-pill-lights")]);
-  const top = button("echo-topbar"), side = button("echo-side");
+  const top = button("echo-topbar", { variables: { overview_path: layout.overview_path } }), side = button("echo-side");
   if (layout.weather) top.entity = side.entity = layout.weather;
   if (layout.forecast_sensor) side.variables = { forecast_sensor: layout.forecast_sensor };
   const shell = button("echo-shell", { custom_fields: {

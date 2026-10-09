@@ -37,5 +37,24 @@ class TemplatesTest(unittest.TestCase):
         self.assertIn("variables.exclude", pill["label"])
 
 
+    def test_topbar_overview_uses_variable(self):
+        top = self.t["echo-topbar"]
+        self.assertEqual(top["variables"]["overview_path"], "/lovelace")
+        self.assertIn("variables.overview_path", top["custom_fields"]["overview"]["card"]["tap_action"]["navigation_path"])
+
+
+class WorkflowsTest(unittest.TestCase):
+    def test_release_runs_tests_first(self):
+        steps = yaml.safe_load((SRC.parents[1] / ".github/workflows/release.yml").read_text())["jobs"]["release"]["steps"]
+        runs = " ".join(s.get("run", "") for s in steps)
+        for cmd in ("unittest discover -s tests", "unittest discover -s generator", "npm test", "check-generated.sh"):
+            self.assertIn(cmd, runs.split("gh release create")[0])
+
+    def test_hacs_action_pinned(self):
+        for wf in ("ci.yml",):
+            text = (SRC.parents[1] / ".github/workflows" / wf).read_text()
+            self.assertNotIn("hacs/action@main", text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -117,5 +117,24 @@ class GenerateTest(unittest.TestCase):
         self.assertEqual(json.loads(out)["views"][0]["path"], "home")
 
 
+class MinorsTest(unittest.TestCase):
+    def setUp(self):
+        self.templates = g.load_templates()
+
+    def test_topbar_gets_overview_path(self):
+        top = lambda cfg: g.shell(cfg)["custom_fields"]["top"]["card"]
+        self.assertEqual(top(g.build(self.templates, {}))["variables"], {"overview_path": "/lovelace"})
+        self.assertEqual(top(g.build(self.templates, {"overview_path": "/home"}))["variables"], {"overview_path": "/home"})
+
+    def test_room_title_defaults_to_area(self):
+        cfg = g.build(self.templates, {"rooms": [{"area": "guest_room"}]})
+        self.assertEqual(g.find_panel(cfg, "a_guest_room")["name"], "Guest Room")
+
+    def test_null_values_mean_empty(self):
+        cfg = g.build(self.templates, {"rooms": [{"area": "x", "title": "X", "extra": None}], "media_exclude": None})
+        self.assertEqual(g.dock_card(cfg, "media")["variables"]["exclude"], [])
+        self.assertEqual(g.find_panel(cfg, "a_x")["custom_fields"]["body"]["card"]["entities"][0]["variables"]["extra"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

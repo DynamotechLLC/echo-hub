@@ -30,6 +30,10 @@ describe("strategy and generator produce the same dashboard", () => {
     it(name, () => {
       const layout = discover(hass, options, { advancedCamera: true });
       expect(withoutRoomBodies(build(templates, layout), layout)).toEqual(withoutRoomBodies(generator(layout), layout));
+      // Room bodies differ by design (explicit cards vs auto-entities), but the room tile must match.
+      const rail = (c: any) => c.views[0].cards[0].custom_fields.rail.card.custom_fields;
+      const s = rail(build(templates, layout)), g = rail(generator(layout));
+      for (const r of layout.rooms) expect(s[r.id].card.custom_fields.body.card.cards[0]).toEqual(g[r.id].card.custom_fields.body.card.entities[0]);
     });
   }
 });

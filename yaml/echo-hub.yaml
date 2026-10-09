@@ -20,9 +20,10 @@ button_card_templates:
       - padding: 12px 10px 10px 14px
       - border-radius: 20px
       - box-shadow: none
-      - background: '[[[ return variables.on_states.includes(entity.state) ? ''var(--echo-accent, #1E8BB0)'' : ''var(--echo-tile,
-          #F4F6F8)''; ]]]'
-      - color: '[[[ return variables.on_states.includes(entity.state) ? ''#FFFFFF'' : ''var(--primary-text-color)''; ]]]'
+      - background: '[[[ return variables.on_states.includes((entity?.state ?? ''unavailable'')) ? ''var(--echo-accent, #1E8BB0)''
+          : ''var(--echo-tile, #F4F6F8)''; ]]]'
+      - color: '[[[ return variables.on_states.includes((entity?.state ?? ''unavailable'')) ? ''#FFFFFF'' : ''var(--primary-text-color)'';
+          ]]]'
       grid:
       - grid-template-areas: '"n n" "s s" "i more"'
       - grid-template-columns: 1fr min-content
@@ -168,6 +169,8 @@ button_card_templates:
       - color: var(--primary-text-color)
   echo-topbar:
     template: echo-weather
+    variables:
+      overview_path: /lovelace
     custom_fields:
       overview:
         card:
@@ -176,7 +179,7 @@ button_card_templates:
           icon: mdi:view-dashboard
           tap_action:
             action: navigate
-            navigation_path: /lovelace
+            navigation_path: '[[[ return variables.overview_path; ]]]'
       profile:
         card:
           type: custom:button-card
@@ -188,11 +191,15 @@ button_card_templates:
       now: "[[[\n  const t = entity ? Math.round(Number(entity.attributes.temperature)) : null;\n  const icon = entity ? (variables.icons[entity.state]\
         \ || 'mdi:weather-cloudy') : 'mdi:weather-cloudy';\n  const tf = hass.locale ? hass.locale.time_format : undefined;\n\
         \  const h12 = tf === '12' ? true : tf === '24' ? false : undefined;\n  const lang = hass.locale ? hass.locale.language\
-        \ : undefined;\n  const clock = new Date().toLocaleTimeString(lang, {hour: 'numeric', minute: '2-digit', hour12: h12}).replace(/\\\
-        s?[AP]M$/i, '');\n  if (!this._echoTick) this._echoTick = setInterval(() => this.requestUpdate('_config'), 20000);\n\
-        \  return `<span style=\"display:flex;align-items:center;gap:14px\">\n    <ha-icon icon=\"${icon}\" style=\"--mdc-icon-size:30px;color:var(--echo-warn,#E8A33D)\"\
-        ></ha-icon>\n    <span style=\"font-size:28px\">${t == null || isNaN(t) ? '' : t + '°'}</span>\n    <span style=\"\
-        font-size:44px;font-weight:600;margin-left:12px\">${clock}</span></span>`;\n]]]\n"
+        \ : undefined;\n  // Drop the day period (AM, p. m., 오후…) in any language: the big clock shows only h:mm.\n  const\
+        \ clock = new Intl.DateTimeFormat(lang, {hour: 'numeric', minute: '2-digit', hour12: h12})\n    .formatToParts(new\
+        \ Date()).filter((p) => p.type !== 'dayPeriod').map((p) => p.value).join('').trim();\n  // Re-render every 20 s with\
+        \ no helper entity; stop once the card leaves the page (it re-arms on the next render).\n  if (!this._echoTick) this._echoTick\
+        \ = setInterval(() => {\n    if (!this.isConnected) { clearInterval(this._echoTick); this._echoTick = null; return;\
+        \ }\n    this.requestUpdate('_config');\n  }, 20000);\n  return `<span style=\"display:flex;align-items:center;gap:14px\"\
+        >\n    <ha-icon icon=\"${icon}\" style=\"--mdc-icon-size:30px;color:var(--echo-warn,#E8A33D)\"></ha-icon>\n    <span\
+        \ style=\"font-size:28px\">${t == null || isNaN(t) ? '' : t + '°'}</span>\n    <span style=\"font-size:44px;font-weight:600;margin-left:12px\"\
+        >${clock}</span></span>`;\n]]]\n"
     styles:
       grid:
       - grid-template-areas: '"overview profile . now"'
@@ -203,9 +210,9 @@ button_card_templates:
   echo-side:
     template: echo-weather
     custom_fields:
-      date: "[[[\n  const d = new Date();\n  const day = d.toLocaleDateString(undefined, {weekday: 'long'});\n  const md =\
-        \ d.toLocaleDateString(undefined, {month: 'long', day: 'numeric'});\n  return `<div style=\"font-size:38px;font-weight:500;line-height:1.15;text-align:left\"\
-        >${day},<br>${md}</div>`;\n]]]\n"
+      date: "[[[\n  const d = new Date();\n  const lang = hass.locale ? hass.locale.language : undefined;\n  const day = d.toLocaleDateString(lang,\
+        \ {weekday: 'long'});\n  const md = d.toLocaleDateString(lang, {month: 'long', day: 'numeric'});\n  return `<div style=\"\
+        font-size:38px;font-weight:500;line-height:1.15;text-align:left\">${day},<br>${md}</div>`;\n]]]\n"
       cal: <ha-icon icon="mdi:calendar-month" style="--mdc-icon-size:26px;color:var(--echo-accent,#1E8BB0)"></ha-icon>
       wx: "[[[\n  if (!entity) return '';\n  const t = Math.round(Number(entity.attributes.temperature));\n  const f = variables.forecast_sensor\
         \ ? states[variables.forecast_sensor] : null;\n  const hi = f && !isNaN(Number(f.state)) ? Math.round(Number(f.state))\
@@ -516,30 +523,33 @@ button_card_templates:
   echo-light:
     template: echo-base
     icon: mdi:lightbulb
-    state_display: "[[[\n  if (entity.state !== 'on') return entity.state === 'off' ? 'Off' : entity.state;\n  const b = entity.attributes.brightness;\n\
-      \  return b == null ? 'On' : `On • ${Math.round(b / 2.55)}%`;\n]]]\n"
+    state_display: "[[[\n  const s = entity?.state ?? 'unavailable';\n  if (s !== 'on') return s === 'off' ? 'Off' : s;\n\
+      \  const b = entity?.attributes.brightness;\n  return b == null ? 'On' : `On • ${Math.round(b / 2.55)}%`;\n]]]\n"
   echo-light-tall:
     template: echo-light
     styles:
       card:
       - height: 252px
-      - background: "[[[\n  if (entity.state !== 'on') return 'var(--echo-tile, #F4F6F8)';\n  const p = Math.round((entity.attributes.brightness\
-          \ == null ? 255 : entity.attributes.brightness) / 2.55);\n  return `linear-gradient(to top, var(--echo-accent-deep,\
-          \ #136F8F) ${p}%, var(--echo-accent, #1E8BB0) ${p}%)`;\n]]]\n"
+      - background: "[[[\n  if ((entity?.state ?? 'unavailable') !== 'on') return 'var(--echo-tile, #F4F6F8)';\n  const p\
+          \ = Math.round((entity?.attributes.brightness == null ? 255 : entity?.attributes.brightness) / 2.55);\n  return\
+          \ `linear-gradient(to top, var(--echo-accent-deep, #136F8F) ${p}%, var(--echo-accent, #1E8BB0) ${p}%)`;\n]]]\n"
   echo-fan:
     template: echo-base
     icon: mdi:fan
-    state_display: '[[[ return entity.state === ''on'' ? ''On'' : entity.state === ''off'' ? ''Off'' : entity.state; ]]]'
+    state_display: '[[[ return (entity?.state ?? ''unavailable'') === ''on'' ? ''On'' : (entity?.state ?? ''unavailable'')
+      === ''off'' ? ''Off'' : (entity?.state ?? ''unavailable''); ]]]'
     extra_styles: '@keyframes echo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
       '
     styles:
       icon:
-      - animation: '[[[ return entity.state === ''on'' ? ''echo-spin 2s linear infinite'' : ''none''; ]]]'
+      - animation: '[[[ return (entity?.state ?? ''unavailable'') === ''on'' ? ''echo-spin 2s linear infinite'' : ''none'';
+          ]]]'
   echo-plug:
     template: echo-base
     icon: mdi:power-socket-us
-    state_display: '[[[ return entity.state === ''on'' ? ''On'' : entity.state === ''off'' ? ''Off'' : entity.state; ]]]'
+    state_display: '[[[ return (entity?.state ?? ''unavailable'') === ''on'' ? ''On'' : (entity?.state ?? ''unavailable'')
+      === ''off'' ? ''Off'' : (entity?.state ?? ''unavailable''); ]]]'
   echo-media:
     template: echo-base
     variables:
@@ -547,19 +557,21 @@ button_card_templates:
       - playing
     tap_action:
       action: more-info
-    state_display: "[[[\n  const s = entity.state;\n  if (s === 'playing') return entity.attributes.media_title ? `Playing\
-      \ • ${entity.attributes.media_title}` : 'Playing';\n  return s.charAt(0).toUpperCase() + s.slice(1);\n]]]\n"
+    state_display: "[[[\n  const s = (entity?.state ?? 'unavailable');\n  if (s === 'playing') return entity?.attributes.media_title\
+      \ ? `Playing • ${entity?.attributes.media_title}` : 'Playing';\n  return s.charAt(0).toUpperCase() + s.slice(1);\n]]]\n"
   echo-lock:
     template: echo-base
     variables:
       on_states: []
     tap_action:
       action: more-info
-    icon: '[[[ return entity.state === ''locked'' ? ''mdi:lock'' : ''mdi:lock-open-variant''; ]]]'
-    state_display: '[[[ return entity.state.charAt(0).toUpperCase() + entity.state.slice(1); ]]]'
+    icon: '[[[ return (entity?.state ?? ''unavailable'') === ''locked'' ? ''mdi:lock'' : ''mdi:lock-open-variant''; ]]]'
+    state_display: '[[[ return (entity?.state ?? ''unavailable'').charAt(0).toUpperCase() + (entity?.state ?? ''unavailable'').slice(1);
+      ]]]'
     styles:
       icon:
-      - color: '[[[ return entity.state === ''locked'' ? ''var(--echo-ok, #2E9E6B)'' : ''var(--echo-warn, #E8A33D)''; ]]]'
+      - color: '[[[ return (entity?.state ?? ''unavailable'') === ''locked'' ? ''var(--echo-ok, #2E9E6B)'' : ''var(--echo-warn,
+          #E8A33D)''; ]]]'
   echo-camera:
     show_icon: false
     show_name: true
@@ -567,10 +579,11 @@ button_card_templates:
     tap_action:
       action: navigate
       navigation_path: '[[[ return location.pathname.split(''/'').slice(0, 2).join(''/'') + ''/cameras?advanced-camera-card-action.cams.camera_select=''
-        + entity.entity_id; ]]]'
+        + entity?.entity_id; ]]]'
     hold_action:
       action: more-info
-    state_display: '[[[ return entity.state.charAt(0).toUpperCase() + entity.state.slice(1); ]]]'
+    state_display: '[[[ return (entity?.state ?? ''unavailable'').charAt(0).toUpperCase() + (entity?.state ?? ''unavailable'').slice(1);
+      ]]]'
     styles:
       card:
       - height: 120px
@@ -580,7 +593,7 @@ button_card_templates:
       - color: '#FFFFFF'
       - text-shadow: 0 1px 3px rgba(0,0,0,0.6)
       - background-color: '#3A444E'
-      - background-image: '[[[ return entity.attributes.entity_picture ? `url(${entity.attributes.entity_picture})` : ''none'';
+      - background-image: '[[[ return entity?.attributes.entity_picture ? `url(${entity?.attributes.entity_picture})` : ''none'';
           ]]]'
       - background-size: cover
       - background-position: center
@@ -600,15 +613,16 @@ button_card_templates:
     show_state: true
     tap_action:
       action: more-info
-    state_display: "[[[\n  const mode = entity.state.charAt(0).toUpperCase() + entity.state.slice(1);\n  const cur = entity.attributes.current_temperature;\n\
-      \  return cur == null ? mode : `${mode} • ${Math.round(cur)}°`;\n]]]\n"
+    state_display: "[[[\n  const mode = (entity?.state ?? 'unavailable').charAt(0).toUpperCase() + (entity?.state ?? 'unavailable').slice(1);\n\
+      \  const cur = entity?.attributes.current_temperature;\n  return cur == null ? mode : `${mode} • ${Math.round(cur)}°`;\n\
+      ]]]\n"
     custom_fields:
-      temp: '[[[ const t = entity.attributes.temperature; return t == null ? ''--'' : `${Math.round(t)}°`; ]]]'
+      temp: '[[[ const t = entity?.attributes.temperature; return t == null ? ''--'' : `${Math.round(t)}°`; ]]]'
       down:
         card:
           type: custom:button-card
           template: echo-step
-          entity: '[[[ return entity.entity_id; ]]]'
+          entity: '[[[ return entity?.entity_id; ]]]'
           icon: mdi:chevron-down
           variables:
             step: -1
@@ -616,7 +630,7 @@ button_card_templates:
         card:
           type: custom:button-card
           template: echo-step
-          entity: '[[[ return entity.entity_id; ]]]'
+          entity: '[[[ return entity?.entity_id; ]]]'
           icon: mdi:chevron-up
           variables:
             step: 1
@@ -644,12 +658,12 @@ button_card_templates:
         temp:
         - font-size: 52px
         - font-weight: 500
-        - color: "[[[\n  if (entity.state === 'heat') return 'var(--echo-heat, #E5484D)';\n  if (entity.state === 'cool')\
-            \ return 'var(--echo-cool, #2F80ED)';\n  return 'var(--primary-text-color)';\n]]]\n"
+        - color: "[[[\n  if ((entity?.state ?? 'unavailable') === 'heat') return 'var(--echo-heat, #E5484D)';\n  if ((entity?.state\
+            \ ?? 'unavailable') === 'cool') return 'var(--echo-cool, #2F80ED)';\n  return 'var(--primary-text-color)';\n]]]\n"
         down:
-        - display: '[[[ return entity.attributes.temperature == null ? ''none'' : ''block''; ]]]'
+        - display: '[[[ return entity?.attributes.temperature == null ? ''none'' : ''block''; ]]]'
         up:
-        - display: '[[[ return entity.attributes.temperature == null ? ''none'' : ''block''; ]]]'
+        - display: '[[[ return entity?.attributes.temperature == null ? ''none'' : ''block''; ]]]'
   echo-step:
     variables:
       step: 1
@@ -660,9 +674,9 @@ button_card_templates:
       action: perform-action
       perform_action: climate.set_temperature
       target:
-        entity_id: '[[[ return entity.entity_id; ]]]'
+        entity_id: '[[[ return entity?.entity_id; ]]]'
       data:
-        temperature: '[[[ return Number(entity.attributes.temperature) + Number(variables.step); ]]]'
+        temperature: '[[[ return Number(entity?.attributes.temperature) + Number(variables.step); ]]]'
     hold_action:
       action: none
     styles:
@@ -687,6 +701,8 @@ views:
         card:
           type: custom:button-card
           template: echo-topbar
+          variables:
+            overview_path: /lovelace
           entity: weather.home
       side:
         card:

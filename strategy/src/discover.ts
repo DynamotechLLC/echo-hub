@@ -35,15 +35,40 @@ function members(hass: Hass, area: string, exclude: RegExp[]): string[] {
 const first = (hass: Hass, domain: string) =>
   sorted(Object.keys(hass.states).filter((id) => domainOf(id) === domain && hass.entities[id] && !hass.entities[id].hidden))[0] ?? null;
 
-const pick = <T>(options: Options, key: keyof Options, fallback: T): T =>
-  (Object.prototype.hasOwnProperty.call(options, key) ? (options[key] as T) : fallback);
+const OPTION_KEYS = ["favorites", "rooms", "cameras", "doors", "lock", "climate", "weather", "forecast_sensor",
+  "media_exclude", "kiosk_users", "camera_card", "overview_path"];
+const has = (options: Options, key: keyof Options) => Object.prototype.hasOwnProperty.call(options, key);
+const pick = <T>(options: Options, key: keyof Options, fallback: T): T => (has(options, key) ? (options[key] as T) : fallback);
+// A list option set to null means "none", the same as in the generator.
+const pickList = <T>(options: Options, key: keyof Options, fallback: T[]): T[] =>
+  (has(options, key) ? ((options[key] as T[] | null) ?? []) : fallback);
+
+// Several camera entities of one device are usually streams of the same camera: keep the first.
+// Multi-stream cameras (Reolink, Tapo, ...) expose one entity per stream on the same device: keep the
+// main stream, not the low-resolution sub stream.
+const SUB_STREAM = /(^|_)(sub|fluent|sd|low|ext)(_|$)/;
+function onePerDevice(hass: Hass, ids: string[]): string[] {
+  const best = new Map<string, string>();
+  for (const id of ids) {
+    const dev = hass.entities[id]?.device_id;
+    if (!dev) continue;
+    const cur = best.get(dev);
+    if (!cur || (SUB_STREAM.test(cur.split(".")[1]) && !SUB_STREAM.test(id.split(".")[1]))) best.set(dev, id);
+  }
+  return ids.filter((id) => {
+    const dev = hass.entities[id]?.device_id;
+    return !dev || best.get(dev) === id;
+  });
+}
 
 export function discover(hass: Hass, options: Options, env: { advancedCamera: boolean }): Layout {
-  const media_exclude = pick(options, "media_exclude", DEFAULT_MEDIA_EXCLUDE);
+  const unknown = Object.keys(options).filter((k) => !OPTION_KEYS.includes(k)).sort();
+  if (unknown.length) throw new Error("unknown options: " + unknown.join(", "));
+  const media_exclude = pickList(options, "media_exclude", DEFAULT_MEDIA_EXCLUDE);
   const exclude = media_exclude.map(globToRegExp);
   let rooms: Room[];
-  if (options.rooms) {
-    rooms = options.rooms.map((r) => ({
+  if (has(options, "rooms")) {
+    rooms = (options.rooms ?? []).map((r) => ({
       id: r.id || "a_" + r.area, area: r.area, title: r.title || hass.areas[r.area]?.name || r.area,
       icon: r.icon || hass.areas[r.area]?.icon || "mdi:home", extra: r.extra ?? [], members: members(hass, r.area, exclude),
     }));
@@ -60,17 +85,17 @@ export function discover(hass: Hass, options: Options, env: { advancedCamera: bo
       .filter((r) => r.members.length > 0)
       .sort((a, b) => a.title.localeCompare(b.title));
   }
-  const cameraIds = sorted(Object.keys(hass.states).filter((id) => domainOf(id) === "camera" && usable(hass, id, [])));
-  const cameras = (options.cameras ?? cameraIds).map(tile);
-  const doors = pick(options, "doors", sorted(Object.keys(hass.states).filter((id) => domainOf(id) === "binary_sensor"
+  const cameraIds = onePerDevice(hass, sorted(Object.keys(hass.states).filter((id) => domainOf(id) === "camera" && usable(hass, id, []))));
+  const cameras = pickList<string | Tile>(options, "cameras", cameraIds).map(tile);
+  const doors = pickList(options, "doors", sorted(Object.keys(hass.states).filter((id) => domainOf(id) === "binary_sensor"
     && DOOR_CLASSES.includes(String(hass.states[id].attributes.device_class)) && usable(hass, id, []))));
   const lock = pick(options, "lock", first(hass, "lock"));
   const climate = pick(options, "climate", first(hass, "climate"));
   const weather = pick(options, "weather", first(hass, "weather"));
   const defaults = [climate, lock, cameras[0]?.entity].filter((x): x is string => !!x);
   return {
-    favorites: (options.favorites ?? defaults).map(tile), rooms, cameras, doors, lock, climate, weather,
-    forecast_sensor: pick(options, "forecast_sensor", null), media_exclude, kiosk_users: pick(options, "kiosk_users", []),
+    favorites: pickList<string | Tile>(options, "favorites", defaults).map(tile), rooms, cameras, doors, lock, climate, weather,
+    forecast_sensor: pick(options, "forecast_sensor", null), media_exclude, kiosk_users: pickList(options, "kiosk_users", []),
     camera_card: pick(options, "camera_card", env.advancedCamera ? "advanced" : "picture"),
     overview_path: pick(options, "overview_path", "/lovelace"),
   };

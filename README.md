@@ -25,7 +25,7 @@ All three options draw the same dashboard from the same templates (`src/template
 
 - Home Assistant 2024.8.0 or newer, and [HACS](https://hacs.xyz).
 - [button-card](https://github.com/custom-cards/button-card): all options.
-- [auto-entities](https://github.com/thomasloven/lovelace-auto-entities): options 2 and 3.
+- [auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities) (the maintained fork; the original thomasloven version also works): options 2 and 3.
 - Optional: [Advanced Camera Card](https://github.com/dermotduffy/advanced-camera-card) for the Cameras view (otherwise the built-in picture cards are used), and [kiosk-mode](https://github.com/NemesisRE/kiosk-mode) for wall panels.
 
 Install each one the same way: HACS → search the name → **Download** → reload the browser.
@@ -59,13 +59,13 @@ strategy:
   type: custom:echo-hub
 ```
 
-Every option is optional:
+Every option is optional. A list option set to `null` means an empty list, and an unknown key (a typo such as `favourites`) shows one card naming it instead of the dashboard:
 
 | Key | Default | Meaning |
 |---|---|---|
 | `favorites` | thermostat, lock, first camera | Tiles in the Favorites panel: entity ids, or `{entity, name, template}`. Lights, fans, switches, media players, locks, cameras and thermostats get their own tile; anything else gets a plain tile that opens its details |
-| `rooms` | every area with lights, fans, switches or media players, by name | `{area, title, icon, extra}`; `extra` adds entities from outside the area |
-| `cameras` | every camera | Camera entity ids, or `{entity, name, ptz}` |
+| `rooms` | every area with lights, fans, switches or media players, by name | `{area, title, icon, extra, id}`. `title` defaults to the area name, `extra` adds entities from outside the area, `id` names the panel (default `a_<area>`; must be unique and not `fav`, `cameras` or a button-card name such as `lock`) |
+| `cameras` | every camera, one per device (a camera with several stream entities shows its main stream, not `sub`, `fluent` or `sd`) | Camera entity ids, or `{entity, name, ptz}`. `ptz` adds pan/tilt arrows to the Cameras view: give the prefix of four button entities `button.<ptz>_move_left`, `_move_right`, `_move_up`, `_move_down` (the naming Tapo cameras use) |
 | `doors` | binary sensors with device class door, garage door or opening | Shown in the Doors pill |
 | `lock` | first lock | Lock pill |
 | `climate` | first climate entity | Climate pill |
@@ -103,13 +103,14 @@ cp generator/layout.example.yaml layout.yaml
 python3 generator/generate.py layout.yaml > echo-hub.yaml
 ```
 
-Create a dashboard, open ⋮ → **Edit dashboard** → ⋮ → **Raw configuration editor**, paste `echo-hub.yaml` and **Save**. Mistakes stop the run with a message on stderr, for example `ValueError: unknown layout keys: favourites`.
+Create a dashboard, open ⋮ → **Edit dashboard** → ⋮ → **Raw configuration editor**, paste `echo-hub.yaml` and **Save**. Mistakes stop the run with a message on stderr, for example `ValueError: unknown layout keys: favourites`. A list key set to `null` means an empty list; a room without `title` is titled from its area id (`guest_room` → Guest Room).
 
 ## Option 3: Copy-paste YAML
 
 Open [`yaml/echo-hub.yaml`](yaml/echo-hub.yaml), press **Raw**, copy everything, and paste it into a new dashboard's **Raw configuration editor**. Then change:
 
 - each `area:` (`living_room`, `kitchen`, `bedroom`, `office`) to your area ids, and the room titles and icons in the room panels and in the `nav_` pills;
+- if you add or remove a room, camera or pill: the `grid-template-areas` line of the rail or dock lists every panel or pill key in order, and the `grid-template-columns` line next to it has `repeat(N, max-content)` with N = how many there are. Keep both in step, or regenerate with option 2 instead;
 - the `favorites` panel entities;
 - the camera entities, or delete the Cameras panel, the `nav_cameras` pill and the Cameras view;
 - the `doors`, `lockpill` and `climate` pill entities;
@@ -167,10 +168,14 @@ Strategy: HACS shows the update; download it and reload. Generator: `git pull`, 
 
 Delete the dashboard, then remove Echo Hub (and the theme, if unused) in HACS.
 
+## Development
+
+`npm test` and `python3 -m unittest discover -s tests` (and `-s generator`) run the unit tests. `node scripts/e2e.mjs <ha tag>` (Node 22, Docker, `npx playwright install chromium`) starts Home Assistant with the demo integration, installs everything and checks all three dashboards in a headless browser; CI runs it on 2024.8.0 and stable.
+
 ## License
 
 [MIT](LICENSE) © 2026 DynamotechLLC
 
 ## Credits
 
-Built on [button-card](https://github.com/custom-cards/button-card), [auto-entities](https://github.com/thomasloven/lovelace-auto-entities), [Advanced Camera Card](https://github.com/dermotduffy/advanced-camera-card) and [kiosk-mode](https://github.com/NemesisRE/kiosk-mode).
+Built on [button-card](https://github.com/custom-cards/button-card), [auto-entities](https://github.com/Lint-Free-Technology/lovelace-auto-entities), [Advanced Camera Card](https://github.com/dermotduffy/advanced-camera-card) and [kiosk-mode](https://github.com/NemesisRE/kiosk-mode).

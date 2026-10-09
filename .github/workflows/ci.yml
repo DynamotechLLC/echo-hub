@@ -13,8 +13,29 @@ jobs:
       - run: python -m unittest discover -s tests -v && python -m unittest discover -s generator -v
       - run: npm test
       - run: ./scripts/check-generated.sh
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        ha: ["2024.8.0", "stable"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22", cache: npm}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: npm ci && pip install pyyaml
+      - run: npx playwright install --with-deps chromium
+      - run: docker pull ghcr.io/home-assistant/home-assistant:${{ matrix.ha }}
+      - run: node scripts/e2e.mjs ${{ matrix.ha }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: "e2e-${{ matrix.ha }}", path: e2e-results/, if-no-files-found: ignore}
   hacs:
     runs-on: ubuntu-latest
     steps:
-      - uses: hacs/action@main
+      - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main on 2026-06-08
         with: {category: plugin}
