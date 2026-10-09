@@ -4,10 +4,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: {node-version: "20", cache: npm}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - run: npm ci && pip install pyyaml
       - run: python -m unittest discover -s tests -v && python -m unittest discover -s generator -v
@@ -15,23 +15,24 @@ jobs:
       - run: ./scripts/check-generated.sh
   e2e:
     needs: test
-    runs-on: ubuntu-latest
+    # Playwright 1.48 installs browser dependencies only on Ubuntu releases it knows.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
         ha: ["2024.8.0", "stable"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: {node-version: "22", cache: npm}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: {python-version: "3.12"}
       - run: npm ci && pip install pyyaml
       - run: npx playwright install --with-deps chromium
       - run: docker pull ghcr.io/home-assistant/home-assistant:${{ matrix.ha }}
       - run: node scripts/e2e.mjs ${{ matrix.ha }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with: {name: "e2e-${{ matrix.ha }}", path: e2e-results/, if-no-files-found: ignore}
   hacs:
