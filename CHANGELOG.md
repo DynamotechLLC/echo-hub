@@ -1,4 +1,9 @@
 # Changelog
+## v0.1.4
+- Fan tiles show the speed and get −/+ buttons (`fan.decrease_speed` / `fan.increase_speed`; + from off starts the lowest speed, hidden for fans without speed control).
+- Fix: the ⋮ on light, fan, plug, media and lock tiles opens more-info (it used to toggle the tile).
+- Room tiles count fans ("1 fan on") and "Turn all off" turns off the room's fans too.
+- Thermostat tile and Climate pill show the low–high range in heat/cool mode instead of `--`.
 ## v0.1.3
 - Fix: the topbar overview button follows `overview_path`; the clock stops its timer when the card is removed; the clock drops AM/PM in every language and the side date follows the Home Assistant language.
 - Fix: tiles for entities that do not exist yet show "unavailable" instead of an error card (copy-paste YAML before editing).

@@ -20,7 +20,7 @@ REQUIRED_TEMPLATES = [
     "echo-shell", "echo-topbar", "echo-round", "echo-side", "echo-rail", "echo-panel", "echo-dock",
     "echo-pill", "echo-nav", "echo-pill-media", "echo-pill-doors", "echo-pill-lock", "echo-pill-climate",
     "echo-pill-lights", "echo-room", "echo-light", "echo-light-tall", "echo-fan", "echo-plug", "echo-media",
-    "echo-lock", "echo-camera", "echo-thermostat", "echo-step", "echo-camshell", "echo-pill-view", "echo-round-view",
+    "echo-lock", "echo-camera", "echo-thermostat", "echo-step", "echo-tilebtn", "echo-camshell", "echo-pill-view", "echo-round-view",
 ]
 DOMAIN_TEMPLATES = {
     "light": "echo-light", "fan": "echo-fan", "switch": "echo-plug", "media_player": "echo-media",

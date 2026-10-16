@@ -15,8 +15,16 @@ echo-base:
     action: toggle
   hold_action:
     action: more-info
+  # The dots open more-info (a nested card, so its tap never reaches the tile's toggle).
   custom_fields:
-    more: '<ha-icon icon="mdi:dots-vertical" style="width: 20px"></ha-icon>'
+    more:
+      card:
+        type: custom:button-card
+        template: echo-tilebtn
+        entity: "[[[ return entity?.entity_id; ]]]"
+        icon: mdi:dots-vertical
+        tap_action:
+          action: more-info
   styles:
     card:
       - height: 120px
@@ -511,9 +519,12 @@ echo-pill-climate:
   label: |
     [[[
       if (!entity || entity.state === 'off') return 'Off';
-      const t = entity.attributes.temperature;
-      const mode = entity.state.charAt(0).toUpperCase() + entity.state.slice(1);
-      return t == null ? mode : `${mode} to ${Math.round(t)}°`;
+      const a = entity.attributes;
+      const mode = entity.state === 'heat_cool' ? 'Auto' : entity.state.charAt(0).toUpperCase() + entity.state.slice(1);
+      if (a.temperature != null) return `${mode} to ${Math.round(a.temperature)}°`;
+      if (a.target_temp_low != null && a.target_temp_high != null)
+        return `${mode} ${Math.round(a.target_temp_low)}–${Math.round(a.target_temp_high)}°`;
+      return mode;
     ]]]
 
 echo-pill-lights:
@@ -551,6 +562,16 @@ echo-room:
           return (e.area_id || (dev ? dev.area_id : null)) === variables.area;
         });
       ]]]
+    fans: |
+      [[[
+        return Object.keys(states).filter((id) => {
+          if (!id.startsWith('fan.')) return false;
+          const e = hass.entities[id];
+          if (!e || e.hidden) return false;
+          const dev = e.device_id ? hass.devices[e.device_id] : null;
+          return (e.area_id || (dev ? dev.area_id : null)) === variables.area;
+        });
+      ]]]
   show_icon: false
   show_name: true
   show_state: false
@@ -559,23 +580,29 @@ echo-room:
   label: |
     [[[
       const on = variables.lights.filter((id) => states[id].state === 'on');
-      if (!on.length) return variables.lights.length ? 'All off' : 'No lights';
+      const fans = variables.fans.filter((id) => states[id].state === 'on').length;
+      const fan = fans ? `${fans} fan${fans > 1 ? 's' : ''} on` : '';
+      if (!on.length) {
+        if (fan) return fan;
+        return variables.lights.length || variables.fans.length ? 'All off' : 'No lights';
+      }
       const b = on.map((id) => states[id].attributes.brightness).filter((x) => x != null);
       const avg = b.length ? ` • ${Math.round(b.reduce((s, x) => s + x, 0) / b.length / 2.55)}%` : '';
-      return `${on.length} On${avg}`;
+      return `${on.length} On${avg}${fan ? ' • ' + fan : ''}`;
     ]]]
   custom_fields:
     alloff: |
       [[[
-        return variables.lights.some((id) => states[id].state === 'on')
+        return variables.lights.concat(variables.fans).some((id) => states[id].state === 'on')
           ? '<span style="display:flex;align-items:center;gap:6px"><ha-icon icon="mdi:lightbulb-off-outline" style="--mdc-icon-size:18px"></ha-icon>Turn all off</span>'
           : '';
       ]]]
+  # Turns off the room's lights and fans.
   tap_action:
     action: perform-action
-    perform_action: light.turn_off
+    perform_action: homeassistant.turn_off
     target:
-      entity_id: "[[[ return variables.lights.length ? variables.lights : 'none'; ]]]"
+      entity_id: "[[[ const all = variables.lights.concat(variables.fans); return all.length ? all : 'none'; ]]]"
   hold_action:
     action: none
   styles:
@@ -584,8 +611,8 @@ echo-room:
       - padding: 12px 10px 10px 14px
       - border-radius: 20px
       - box-shadow: none
-      - background: "[[[ return variables.lights.some((id) => states[id].state === 'on') ? 'var(--echo-accent, #1E8BB0)' : 'var(--echo-tile, #F4F6F8)'; ]]]"
-      - color: "[[[ return variables.lights.some((id) => states[id].state === 'on') ? '#FFFFFF' : 'var(--primary-text-color)'; ]]]"
+      - background: "[[[ return variables.lights.concat(variables.fans).some((id) => states[id].state === 'on') ? 'var(--echo-accent, #1E8BB0)' : 'var(--echo-tile, #F4F6F8)'; ]]]"
+      - color: "[[[ return variables.lights.concat(variables.fans).some((id) => states[id].state === 'on') ? '#FFFFFF' : 'var(--primary-text-color)'; ]]]"
     grid:
       - grid-template-areas: '"n" "l" "alloff"'
       - grid-template-columns: 1fr
@@ -630,15 +657,57 @@ echo-light-tall:
             return `linear-gradient(to top, var(--echo-accent-deep, #136F8F) ${p}%, var(--echo-accent, #1E8BB0) ${p}%)`;
           ]]]
 
+# -/+ step the speed by the fan's percentage_step (+ from off starts the fan at the
+# lowest speed); hidden for fans without SET_SPEED (supported_features bit 1).
 echo-fan:
   template: echo-base
   icon: mdi:fan
-  state_display: "[[[ return (entity?.state ?? 'unavailable') === 'on' ? 'On' : (entity?.state ?? 'unavailable') === 'off' ? 'Off' : (entity?.state ?? 'unavailable'); ]]]"
+  state_display: |
+    [[[
+      const s = entity?.state ?? 'unavailable';
+      if (s !== 'on') return s === 'off' ? 'Off' : s;
+      const p = entity?.attributes.percentage;
+      return p ? `On • ${Math.round(p)}%` : 'On';
+    ]]]
   extra_styles: |
     @keyframes echo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  custom_fields:
+    slower:
+      card:
+        type: custom:button-card
+        template: echo-tilebtn
+        entity: "[[[ return entity?.entity_id; ]]]"
+        icon: mdi:minus
+        tap_action:
+          action: perform-action
+          perform_action: fan.decrease_speed
+          target:
+            entity_id: "[[[ return entity?.entity_id; ]]]"
+    faster:
+      card:
+        type: custom:button-card
+        template: echo-tilebtn
+        entity: "[[[ return entity?.entity_id; ]]]"
+        icon: mdi:plus
+        tap_action:
+          action: perform-action
+          perform_action: fan.increase_speed
+          target:
+            entity_id: "[[[ return entity?.entity_id; ]]]"
   styles:
+    grid:
+      - grid-template-areas: '"n n n n" "s s s s" "i slower faster more"'
+      - grid-template-columns: 1fr min-content min-content min-content
+      - column-gap: 4px
     icon:
       - animation: "[[[ return (entity?.state ?? 'unavailable') === 'on' ? 'echo-spin 2s linear infinite' : 'none'; ]]]"
+    custom_fields:
+      slower:
+        - align-self: end
+        - display: "[[[ return entity?.attributes.supported_features & 1 && entity?.state === 'on' ? 'block' : 'none'; ]]]"
+      faster:
+        - align-self: end
+        - display: "[[[ return entity?.attributes.supported_features & 1 ? 'block' : 'none'; ]]]"
 
 echo-plug:
   template: echo-base
@@ -717,7 +786,14 @@ echo-thermostat:
       return cur == null ? mode : `${mode} • ${Math.round(cur)}°`;
     ]]]
   custom_fields:
-    temp: "[[[ const t = entity?.attributes.temperature; return t == null ? '--' : `${Math.round(t)}°`; ]]]"
+    temp: |
+      [[[
+        const a = entity?.attributes ?? {};
+        if (a.temperature != null) return `${Math.round(a.temperature)}°`;
+        if (a.target_temp_low != null && a.target_temp_high != null)
+          return `<span style="font-size:40px">${Math.round(a.target_temp_low)}–${Math.round(a.target_temp_high)}°</span>`;
+        return '--';
+      ]]]
     down:
       card:
         type: custom:button-card
@@ -768,6 +844,26 @@ echo-thermostat:
         - display: "[[[ return entity?.attributes.temperature == null ? 'none' : 'block'; ]]]"
       up:
         - display: "[[[ return entity?.attributes.temperature == null ? 'none' : 'block'; ]]]"
+
+# Small round button inside a tile; inherits the tile's text colour.
+echo-tilebtn:
+  show_name: false
+  show_state: false
+  show_icon: true
+  hold_action:
+    action: none
+  styles:
+    card:
+      - width: 30px
+      - height: 30px
+      - padding: 0
+      - border-radius: 50%
+      - box-shadow: none
+      - background: rgba(127,127,127,0.18)
+      - color: inherit
+    icon:
+      - width: 18px
+      - color: inherit
 
 echo-step:
   variables:

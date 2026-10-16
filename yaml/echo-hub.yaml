@@ -13,7 +13,14 @@ button_card_templates:
     hold_action:
       action: more-info
     custom_fields:
-      more: '<ha-icon icon="mdi:dots-vertical" style="width: 20px"></ha-icon>'
+      more:
+        card:
+          type: custom:button-card
+          template: echo-tilebtn
+          entity: '[[[ return entity?.entity_id; ]]]'
+          icon: mdi:dots-vertical
+          tap_action:
+            action: more-info
     styles:
       card:
       - height: 120px
@@ -445,9 +452,10 @@ button_card_templates:
         \ #E5484D)';\n  if (entity.state === 'cool') return 'var(--echo-cool, #2F80ED)';\n  return 'var(--secondary-text-color)';\n\
         ]]]\n"
     icon: mdi:thermostat
-    label: "[[[\n  if (!entity || entity.state === 'off') return 'Off';\n  const t = entity.attributes.temperature;\n  const\
-      \ mode = entity.state.charAt(0).toUpperCase() + entity.state.slice(1);\n  return t == null ? mode : `${mode} to ${Math.round(t)}°`;\n\
-      ]]]\n"
+    label: "[[[\n  if (!entity || entity.state === 'off') return 'Off';\n  const a = entity.attributes;\n  const mode = entity.state\
+      \ === 'heat_cool' ? 'Auto' : entity.state.charAt(0).toUpperCase() + entity.state.slice(1);\n  if (a.temperature != null)\
+      \ return `${mode} to ${Math.round(a.temperature)}°`;\n  if (a.target_temp_low != null && a.target_temp_high != null)\n\
+      \    return `${mode} ${Math.round(a.target_temp_low)}–${Math.round(a.target_temp_high)}°`;\n  return mode;\n]]]\n"
   echo-pill-lights:
     template: echo-pill-status
     triggers_update: all
@@ -470,24 +478,29 @@ button_card_templates:
         \ return false;\n    if (variables.extra.includes(id)) return true;\n    const e = hass.entities[id];\n    if (!e\
         \ || e.hidden) return false;\n    const dev = e.device_id ? hass.devices[e.device_id] : null;\n    return (e.area_id\
         \ || (dev ? dev.area_id : null)) === variables.area;\n  });\n]]]\n"
+      fans: "[[[\n  return Object.keys(states).filter((id) => {\n    if (!id.startsWith('fan.')) return false;\n    const\
+        \ e = hass.entities[id];\n    if (!e || e.hidden) return false;\n    const dev = e.device_id ? hass.devices[e.device_id]\
+        \ : null;\n    return (e.area_id || (dev ? dev.area_id : null)) === variables.area;\n  });\n]]]\n"
     show_icon: false
     show_name: true
     show_state: false
     show_label: true
     icon: mdi:lightbulb-group
-    label: "[[[\n  const on = variables.lights.filter((id) => states[id].state === 'on');\n  if (!on.length) return variables.lights.length\
-      \ ? 'All off' : 'No lights';\n  const b = on.map((id) => states[id].attributes.brightness).filter((x) => x != null);\n\
-      \  const avg = b.length ? ` • ${Math.round(b.reduce((s, x) => s + x, 0) / b.length / 2.55)}%` : '';\n  return `${on.length}\
-      \ On${avg}`;\n]]]\n"
+    label: "[[[\n  const on = variables.lights.filter((id) => states[id].state === 'on');\n  const fans = variables.fans.filter((id)\
+      \ => states[id].state === 'on').length;\n  const fan = fans ? `${fans} fan${fans > 1 ? 's' : ''} on` : '';\n  if (!on.length)\
+      \ {\n    if (fan) return fan;\n    return variables.lights.length || variables.fans.length ? 'All off' : 'No lights';\n\
+      \  }\n  const b = on.map((id) => states[id].attributes.brightness).filter((x) => x != null);\n  const avg = b.length\
+      \ ? ` • ${Math.round(b.reduce((s, x) => s + x, 0) / b.length / 2.55)}%` : '';\n  return `${on.length} On${avg}${fan\
+      \ ? ' • ' + fan : ''}`;\n]]]\n"
     custom_fields:
-      alloff: "[[[\n  return variables.lights.some((id) => states[id].state === 'on')\n    ? '<span style=\"display:flex;align-items:center;gap:6px\"\
-        ><ha-icon icon=\"mdi:lightbulb-off-outline\" style=\"--mdc-icon-size:18px\"></ha-icon>Turn all off</span>'\n    :\
-        \ '';\n]]]\n"
+      alloff: "[[[\n  return variables.lights.concat(variables.fans).some((id) => states[id].state === 'on')\n    ? '<span\
+        \ style=\"display:flex;align-items:center;gap:6px\"><ha-icon icon=\"mdi:lightbulb-off-outline\" style=\"--mdc-icon-size:18px\"\
+        ></ha-icon>Turn all off</span>'\n    : '';\n]]]\n"
     tap_action:
       action: perform-action
-      perform_action: light.turn_off
+      perform_action: homeassistant.turn_off
       target:
-        entity_id: '[[[ return variables.lights.length ? variables.lights : ''none''; ]]]'
+        entity_id: '[[[ const all = variables.lights.concat(variables.fans); return all.length ? all : ''none''; ]]]'
     hold_action:
       action: none
     styles:
@@ -496,10 +509,10 @@ button_card_templates:
       - padding: 12px 10px 10px 14px
       - border-radius: 20px
       - box-shadow: none
-      - background: '[[[ return variables.lights.some((id) => states[id].state === ''on'') ? ''var(--echo-accent, #1E8BB0)''
-          : ''var(--echo-tile, #F4F6F8)''; ]]]'
-      - color: '[[[ return variables.lights.some((id) => states[id].state === ''on'') ? ''#FFFFFF'' : ''var(--primary-text-color)'';
-          ]]]'
+      - background: '[[[ return variables.lights.concat(variables.fans).some((id) => states[id].state === ''on'') ? ''var(--echo-accent,
+          #1E8BB0)'' : ''var(--echo-tile, #F4F6F8)''; ]]]'
+      - color: '[[[ return variables.lights.concat(variables.fans).some((id) => states[id].state === ''on'') ? ''#FFFFFF''
+          : ''var(--primary-text-color)''; ]]]'
       grid:
       - grid-template-areas: '"n" "l" "alloff"'
       - grid-template-columns: 1fr
@@ -536,15 +549,50 @@ button_card_templates:
   echo-fan:
     template: echo-base
     icon: mdi:fan
-    state_display: '[[[ return (entity?.state ?? ''unavailable'') === ''on'' ? ''On'' : (entity?.state ?? ''unavailable'')
-      === ''off'' ? ''Off'' : (entity?.state ?? ''unavailable''); ]]]'
+    state_display: "[[[\n  const s = entity?.state ?? 'unavailable';\n  if (s !== 'on') return s === 'off' ? 'Off' : s;\n\
+      \  const p = entity?.attributes.percentage;\n  return p ? `On • ${Math.round(p)}%` : 'On';\n]]]\n"
     extra_styles: '@keyframes echo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
       '
+    custom_fields:
+      slower:
+        card:
+          type: custom:button-card
+          template: echo-tilebtn
+          entity: '[[[ return entity?.entity_id; ]]]'
+          icon: mdi:minus
+          tap_action:
+            action: perform-action
+            perform_action: fan.decrease_speed
+            target:
+              entity_id: '[[[ return entity?.entity_id; ]]]'
+      faster:
+        card:
+          type: custom:button-card
+          template: echo-tilebtn
+          entity: '[[[ return entity?.entity_id; ]]]'
+          icon: mdi:plus
+          tap_action:
+            action: perform-action
+            perform_action: fan.increase_speed
+            target:
+              entity_id: '[[[ return entity?.entity_id; ]]]'
     styles:
+      grid:
+      - grid-template-areas: '"n n n n" "s s s s" "i slower faster more"'
+      - grid-template-columns: 1fr min-content min-content min-content
+      - column-gap: 4px
       icon:
       - animation: '[[[ return (entity?.state ?? ''unavailable'') === ''on'' ? ''echo-spin 2s linear infinite'' : ''none'';
           ]]]'
+      custom_fields:
+        slower:
+        - align-self: end
+        - display: '[[[ return entity?.attributes.supported_features & 1 && entity?.state === ''on'' ? ''block'' : ''none'';
+            ]]]'
+        faster:
+        - align-self: end
+        - display: '[[[ return entity?.attributes.supported_features & 1 ? ''block'' : ''none''; ]]]'
   echo-plug:
     template: echo-base
     icon: mdi:power-socket-us
@@ -617,7 +665,9 @@ button_card_templates:
       \  const cur = entity?.attributes.current_temperature;\n  return cur == null ? mode : `${mode} • ${Math.round(cur)}°`;\n\
       ]]]\n"
     custom_fields:
-      temp: '[[[ const t = entity?.attributes.temperature; return t == null ? ''--'' : `${Math.round(t)}°`; ]]]'
+      temp: "[[[\n  const a = entity?.attributes ?? {};\n  if (a.temperature != null) return `${Math.round(a.temperature)}°`;\n\
+        \  if (a.target_temp_low != null && a.target_temp_high != null)\n    return `<span style=\"font-size:40px\">${Math.round(a.target_temp_low)}–${Math.round(a.target_temp_high)}°</span>`;\n\
+        \  return '--';\n]]]\n"
       down:
         card:
           type: custom:button-card
@@ -664,6 +714,24 @@ button_card_templates:
         - display: '[[[ return entity?.attributes.temperature == null ? ''none'' : ''block''; ]]]'
         up:
         - display: '[[[ return entity?.attributes.temperature == null ? ''none'' : ''block''; ]]]'
+  echo-tilebtn:
+    show_name: false
+    show_state: false
+    show_icon: true
+    hold_action:
+      action: none
+    styles:
+      card:
+      - width: 30px
+      - height: 30px
+      - padding: 0
+      - border-radius: 50%
+      - box-shadow: none
+      - background: rgba(127,127,127,0.18)
+      - color: inherit
+      icon:
+      - width: 18px
+      - color: inherit
   echo-step:
     variables:
       step: 1

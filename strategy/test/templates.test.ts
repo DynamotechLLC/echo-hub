@@ -35,6 +35,32 @@ describe("templates", () => {
     vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 9, 9, 15, 4));
     expect(run(t["echo-side"].custom_fields.date, card(), hass("es", "24"))).toContain("viernes");
   });
+  it("fan tile shows speed and hides speed buttons without SET_SPEED", () => {
+    const fan = (state: string, attributes: any) => ({ entity_id: "fan.f", state, attributes });
+    const f = t["echo-fan"];
+    expect(run(f.state_display, card(), hass("en", "12"), {}, fan("on", { percentage: 50 }))).toBe("On • 50%");
+    expect(run(f.state_display, card(), hass("en", "12"), {}, fan("off", { percentage: null }))).toBe("Off");
+    const faster = f.styles.custom_fields.faster.find((x: any) => x.display).display;
+    const slower = f.styles.custom_fields.slower.find((x: any) => x.display).display;
+    expect(run(faster, card(), hass("en", "12"), {}, fan("off", { supported_features: 49 }))).toBe("block");
+    expect(run(slower, card(), hass("en", "12"), {}, fan("off", { supported_features: 49 }))).toBe("none");
+    expect(run(faster, card(), hass("en", "12"), {}, fan("on", { supported_features: 48 }))).toBe("none");
+  });
+  it("room tile counts fans and turns them off with the lights", () => {
+    const r = t["echo-room"];
+    const states: any = { "light.a": { state: "off", attributes: {} }, "fan.b": { state: "on", attributes: {} } };
+    const h = { states, entities: { "light.a": { area_id: "office" }, "fan.b": { area_id: "office" } }, devices: {} };
+    const v: any = { ...r.variables, area: "office" };
+    v.lights = run(r.variables.lights, card(), h, v);
+    v.fans = run(r.variables.fans, card(), h, v);
+    expect(run(r.label, card(), h, v)).toBe("1 fan on");
+    expect(run(r.tap_action.target.entity_id, card(), h, v)).toEqual(["light.a", "fan.b"]);
+  });
+  it("thermostat shows the heat_cool range", () => {
+    const e = { entity_id: "climate.c", state: "heat_cool", attributes: { temperature: null, target_temp_low: 68, target_temp_high: 74 } };
+    expect(run(t["echo-thermostat"].custom_fields.temp, card(), hass("en", "12"), {}, e)).toContain("68–74°");
+    expect(run(t["echo-pill-climate"].label, card(), hass("en", "12"), {}, e)).toBe("Auto 68–74°");
+  });
 });
 
 // A pasted layout names example entities that may not exist yet: every template must render, not throw.
